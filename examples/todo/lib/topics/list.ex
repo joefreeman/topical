@@ -1,7 +1,8 @@
 defmodule Todo.ListTopic do
-  use Topical.Topic, name: "list"
+  use Topical.Topic, route: "lists/:list_id"
 
-  def init(list_id) do
+  def init(params) do
+    list_id = Keyword.fetch!(params, :list_id)
     path = get_path(list_id)
 
     value =
@@ -16,7 +17,7 @@ defmodule Todo.ListTopic do
     {:ok, Topic.new(value, %{list_id: list_id})}
   end
 
-  def handle_execute({:add_item, text}, topic) do
+  def handle_invoke("add_item", {text}, topic) do
     id = generate_id(topic.value.items)
 
     topic =
@@ -27,7 +28,7 @@ defmodule Todo.ListTopic do
     {:ok, id, topic}
   end
 
-  def handle_execute({:update_item, id, text}, topic) do
+  def handle_invoke("update_item", {id, text}, topic) do
     {:ok, nil, Topic.update(topic, [:items, id, text], text)}
   end
 

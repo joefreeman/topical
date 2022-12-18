@@ -5,12 +5,12 @@ defmodule Topical.Topic do
     quote location: :keep, bind_quoted: [opts: opts] do
       alias Topical.Topic
 
-      def name() do
-        unquote(Keyword.fetch!(opts, :name))
+      def route() do
+        unquote(Keyword.fetch!(opts, :route))
       end
 
-      def handle_execute(_request, _topic) do
-        raise "no handle_execute/2 implemented"
+      def handle_invoke(_action, _args, _topic) do
+        raise "no handle_invoke/3 implemented"
       end
 
       def handle_info(_msg, topic) do
@@ -22,7 +22,7 @@ defmodule Topical.Topic do
         :ok
       end
 
-      defoverridable handle_execute: 2, handle_info: 2, terminate: 2
+      defoverridable handle_invoke: 3, handle_info: 2, terminate: 2
     end
   end
 

@@ -11,7 +11,8 @@ defmodule Topical do
 
   def subscribe(registry, topic, pid) do
     with {:ok, server} <- Registry.get_topic(registry, topic) do
-      GenServer.call(server, {:subscribe, pid})
+      # TODO: monitor/link server?
+      {:ok, GenServer.call(server, {:subscribe, pid})}
     end
   end
 
@@ -22,9 +23,9 @@ defmodule Topical do
     end
   end
 
-  def execute(registry, topic, request) do
+  def invoke(registry, topic, action, args \\ {}) do
     with {:ok, server} <- Registry.get_topic(registry, topic) do
-      GenServer.call(server, {:execute, request})
+      {:ok, GenServer.call(server, {:invoke, action, args})}
     end
   end
 end

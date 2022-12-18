@@ -5,31 +5,31 @@ defmodule Topical.Topic.Server do
 
   def start_link(options) do
     {module, options} = Keyword.pop!(options, :module)
-    {arguments, options} = Keyword.pop!(options, :arguments)
-    GenServer.start_link(__MODULE__, {module, arguments}, options)
+    {params, options} = Keyword.pop!(options, :params)
+    GenServer.start_link(__MODULE__, {module, params}, options)
   end
 
   @impl true
-  def init({module, arguments}) do
+  def init({module, params}) do
     {:ok,
      %{
        module: module,
        topic: nil,
        subscribers: %{},
        timeout: 10_000
-     }, {:continue, {:init, arguments}}}
+     }, {:continue, {:init, params}}}
   end
 
   @impl true
-  def handle_continue({:init, arguments}, state) do
-    {:ok, topic} = state.module.init(arguments)
+  def handle_continue({:init, params}, state) do
+    {:ok, topic} = state.module.init(params)
     state = Map.put(state, :topic, topic)
     {:noreply, state, timeout(state)}
   end
 
   @impl true
   def handle_continue({:subscribe, ref, pid}, state) do
-    send(pid, {:refresh, ref, state.topic.value})
+    send(pid, {:reset, ref, state.topic.value})
     {:noreply, state, timeout(state)}
   end
 
@@ -48,8 +48,8 @@ defmodule Topical.Topic.Server do
   end
 
   @impl true
-  def handle_call({:execute, request}, _from, state) do
-    case state.module.handle_execute(request, state.topic) do
+  def handle_call({:invoke, action, args}, _from, state) do
+    case state.module.handle_invoke(action, args, state.topic) do
       {:ok, reply, topic} ->
         state = process(state, topic)
         {:reply, reply, state, timeout(state)}
