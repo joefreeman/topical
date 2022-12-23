@@ -17,7 +17,7 @@ defmodule Todo.ListTopic do
     {:ok, Topic.new(value, %{list_id: list_id})}
   end
 
-  def handle_invoke("add_item", {text}, topic) do
+  def handle_execute("add_item", {text}, topic) do
     id = generate_id(topic.value.items)
 
     topic =
@@ -28,8 +28,12 @@ defmodule Todo.ListTopic do
     {:ok, id, topic}
   end
 
-  def handle_invoke("update_item", {id, text}, topic) do
-    {:ok, nil, Topic.update(topic, [:items, id, text], text)}
+  def handle_notify("update_text", {id, text}, topic) do
+    {:ok, Topic.update(topic, [:items, id, :text], text)}
+  end
+
+  def handle_notify("update_done", {id, done}, topic) do
+    {:ok, Topic.update(topic, [:items, id, :done], done)}
   end
 
   def terminate(_reason, topic) do

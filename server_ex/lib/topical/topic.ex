@@ -9,8 +9,12 @@ defmodule Topical.Topic do
         unquote(Keyword.fetch!(opts, :route))
       end
 
-      def handle_invoke(_action, _args, _topic) do
-        raise "no handle_invoke/3 implemented"
+      def handle_notify(_action, _args, _topic) do
+        raise "no handle_notify/3 implemented"
+      end
+
+      def handle_execute(_action, _args, _topic) do
+        raise "no handle_execute/3 implemented"
       end
 
       def handle_info(_msg, topic) do
@@ -22,7 +26,7 @@ defmodule Topical.Topic do
         :ok
       end
 
-      defoverridable handle_invoke: 3, handle_info: 2, terminate: 2
+      defoverridable handle_notify: 3, handle_execute: 3, handle_info: 2, terminate: 2
     end
   end
 

@@ -41,6 +41,15 @@ defmodule Topical.Topic.Server do
   end
 
   @impl true
+  def handle_cast({:notify, action, args}, state) do
+    case state.module.handle_notify(action, args, state.topic) do
+      {:ok, topic} ->
+        state = process(state, topic)
+        {:noreply, state, timeout(state)}
+    end
+  end
+
+  @impl true
   def handle_call({:subscribe, pid}, _from, state) do
     ref = Process.monitor(pid)
     state = put_in(state.subscribers[ref], pid)
@@ -48,8 +57,8 @@ defmodule Topical.Topic.Server do
   end
 
   @impl true
-  def handle_call({:invoke, action, args}, _from, state) do
-    case state.module.handle_invoke(action, args, state.topic) do
+  def handle_call({:execute, action, args}, _from, state) do
+    case state.module.handle_execute(action, args, state.topic) do
       {:ok, reply, topic} ->
         state = process(state, topic)
         {:reply, reply, state, timeout(state)}

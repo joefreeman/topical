@@ -23,9 +23,15 @@ defmodule Topical do
     end
   end
 
-  def invoke(registry, topic, action, args \\ {}) do
+  def notify(registry, topic, action, args \\ {}) do
     with {:ok, server} <- Registry.get_topic(registry, topic) do
-      {:ok, GenServer.call(server, {:invoke, action, args})}
+      GenServer.cast(server, {:notify, action, args})
+    end
+  end
+
+  def execute(registry, topic, action, args \\ {}) do
+    with {:ok, server} <- Registry.get_topic(registry, topic) do
+      {:ok, GenServer.call(server, {:execute, action, args})}
     end
   end
 end
