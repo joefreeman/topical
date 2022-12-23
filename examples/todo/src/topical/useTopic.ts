@@ -1,17 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 
-import Socket from "./socket";
+import { Context } from "./provider";
 
-export default function useTopic<T>(
-  socket: Socket | undefined,
-  topic: string
-): [
+export default function useTopic<T>(topic: string): [
   T | undefined,
   {
     notify: (action: string, ...args: any[]) => void;
     execute: (action: string, ...args: any[]) => Promise<any>;
   }
 ] {
+  const socket = useContext(Context);
   const [value, setValue] = useState<T>();
   const [error, setError] = useState<any>();
   const notify = useCallback(

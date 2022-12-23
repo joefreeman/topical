@@ -1,31 +1,8 @@
 import * as React from "react";
-import {
-  ChangeEvent,
-  FormEvent,
-  Fragment,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { ChangeEvent, FormEvent, Fragment, useCallback, useState } from "react";
 
+import { SocketProvider, useTopic, useSocket } from "../topical";
 import * as models from "../models";
-import Socket, { SocketState } from "../socket";
-import useTopic from "../useTopic";
-
-function useSocket() {
-  const [socket, setSocket] = useState<Socket>();
-  const [state, setState] = useState<SocketState>();
-  useEffect(() => {
-    const socket = new Socket(`ws://${window.location.host}/socket`);
-    socket.addListener(setState);
-    setSocket(socket);
-    return () => {
-      socket.removeListener(setState);
-      socket.close();
-    };
-  }, []);
-  return [socket, state] as const;
-}
 
 type ItemProps = {
   item: models.Item;
@@ -52,12 +29,12 @@ function Item({ item, itemId, onDoneChange }: ItemProps) {
   );
 }
 
-type ListProps = {
+type ItemsProps = {
   list: models.List;
   onDoneChange: (id: string, done: boolean) => void;
 };
 
-function List({ list, onDoneChange }: ListProps) {
+function Items({ list, onDoneChange }: ItemsProps) {
   return (
     <ol>
       {list.order.map((id: string) => (
@@ -95,29 +72,48 @@ function Form({ onSubmit }: FormProps) {
   );
 }
 
-export default function App() {
-  const [socket, state] = useSocket();
-  const topic = "lists/foo";
-  const [list, { execute, notify }] = useTopic<models.List>(socket, topic);
+type ListProps = {
+  name: string;
+};
+
+function List({ name }: ListProps) {
+  const topic = `lists/${name}`;
+  const [list, { execute, notify }] = useTopic<models.List>(topic);
   const handleSubmit = useCallback(
     (text: string) => execute("add_item", text),
-    [socket]
+    [execute]
   );
   const handleDoneChange = useCallback(
     (id: string, done: boolean) => notify("update_done", id, done),
-    [socket]
+    [notify]
   );
   return (
     <div>
-      <p>Socket: {state}</p>
       {list ? (
         <Fragment>
-          <List list={list} onDoneChange={handleDoneChange} />
+          <Items list={list} onDoneChange={handleDoneChange} />
           <Form onSubmit={handleSubmit} />
         </Fragment>
       ) : (
         <p>Loading...</p>
       )}
     </div>
+  );
+}
+
+function SocketStatus() {
+  const [_socket, state] = useSocket();
+  return <p>Socket: {state}</p>;
+}
+
+export default function App() {
+  return (
+    <SocketProvider url={`ws://${window.location.host}/socket`}>
+      <div>
+        <SocketStatus />
+        <List name="foo" />
+        <List name="bar" />
+      </div>
+    </SocketProvider>
   );
 }
