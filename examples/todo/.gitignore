@@ -24,3 +24,15 @@ todo-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# npm packages
+/node_modules
+
+# direnv
+/.direnv
+
+# list files
+/lists
+
+# JS bundle
+/priv/static/assets/bundle.js
