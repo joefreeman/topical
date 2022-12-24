@@ -37,11 +37,16 @@ defmodule Topical.Protocol do
     end
 
     def encode_topic_updates(channel_id, updates) do
-      Jason.encode!([
-        3,
-        channel_id,
-        Enum.map(updates, fn {path, value} -> [path, value] end)
-      ])
+      Jason.encode!([3, channel_id, Enum.map(updates, &encode_update/1)])
+    end
+
+    defp encode_update(update) do
+      case update do
+        {:set, path, value} -> [0, path, value]
+        {:unset, path, key} -> [1, path, key]
+        {:insert, path, index, values} -> [2, path, index, values]
+        {:delete, path, index, count} -> [3, path, index, count]
+      end
     end
   end
 end

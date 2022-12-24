@@ -1,7 +1,7 @@
 defmodule Topical.Topic.Server do
   use GenServer, restart: :transient
 
-  alias Topical.Topic.Utils
+  alias Topical.Topic.Update
 
   def start_link(options) do
     {module, options} = Keyword.pop!(options, :module)
@@ -99,7 +99,7 @@ defmodule Topical.Topic.Server do
   end
 
   defp process(state, topic) do
-    value = Enum.reduce(topic.updates, state.topic.value, &Utils.apply_update/2)
+    value = Enum.reduce(topic.updates, state.topic.value, &Update.apply(&2, &1))
     # TODO: check that value and topic.value are equal?
     notify_subscribers(state.subscribers, topic.updates)
 

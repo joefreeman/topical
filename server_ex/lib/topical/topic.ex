@@ -1,5 +1,5 @@
 defmodule Topical.Topic do
-  alias Topical.Topic.Utils
+  alias Topical.Topic.Update
 
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
@@ -36,11 +36,27 @@ defmodule Topical.Topic do
     %__MODULE__{value: value, state: state, updates: []}
   end
 
-  def update(topic, path, value) do
-    topic_value = Utils.apply_update({path, value}, topic.value)
+  defp update(topic, update) do
+    topic_value = Update.apply(topic.value, update)
 
     topic
-    |> Map.update!(:updates, &[{path, value} | &1])
+    |> Map.update!(:updates, &[update | &1])
     |> Map.put(:value, topic_value)
+  end
+
+  def set(topic, path, value) do
+    update(topic, {:set, path, value})
+  end
+
+  def unset(topic, path, key) do
+    update(topic, {:unset, path, key})
+  end
+
+  def insert(topic, path, index, value) do
+    update(topic, {:insert, path, index, [value]})
+  end
+
+  def delete(topic, path, index, count \\ 1) do
+    update(topic, {:delete, path, index, count})
   end
 end

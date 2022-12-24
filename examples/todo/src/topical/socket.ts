@@ -1,3 +1,5 @@
+import { applyUpdate, Update } from "./updates";
+
 export type SocketState = "connecting" | "connected" | "disconnected";
 
 type Listener<T> = {
@@ -11,8 +13,6 @@ type Topic<T> = {
   value?: T;
 };
 
-type Update = [string[], any];
-
 type Request = {
   onSuccess: (value: unknown) => void;
   onError: (reason?: any) => void;
@@ -20,22 +20,6 @@ type Request = {
 
 function notify(listeners: ((...args: any[]) => void)[], ...args: any[]) {
   listeners.forEach((listener) => listener(...args));
-}
-
-function applyUpdate(currentValue: any, [path, newValue]: Update): any {
-  if (path.length == 0) {
-    return newValue;
-  } else if (newValue === null && path.length == 1) {
-    const [key] = path;
-    const { [key]: _, ...rest } = currentValue;
-    return rest;
-  } else {
-    const [key, ...rest] = path;
-    return {
-      ...currentValue,
-      [key]: applyUpdate(currentValue[key], [rest, newValue]),
-    };
-  }
 }
 
 export default class Socket {

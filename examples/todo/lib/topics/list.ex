@@ -22,18 +22,19 @@ defmodule Todo.ListTopic do
 
     topic =
       topic
-      |> Topic.update([:items, id], %{text: text})
-      |> Topic.update([:order], topic.value.order ++ [id])
+      |> Topic.set([:items, id], %{text: text})
+      # TODO: insert/append?
+      |> Topic.set([:order], topic.value.order ++ [id])
 
     {:ok, id, topic}
   end
 
   def handle_notify("update_text", {id, text}, topic) do
-    {:ok, Topic.update(topic, [:items, id, :text], text)}
+    {:ok, Topic.set(topic, [:items, id, :text], text)}
   end
 
   def handle_notify("update_done", {id, done}, topic) do
-    {:ok, Topic.update(topic, [:items, id, :done], done)}
+    {:ok, Topic.set(topic, [:items, id, :done], done)}
   end
 
   def terminate(_reason, topic) do
