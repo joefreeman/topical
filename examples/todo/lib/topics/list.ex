@@ -8,7 +8,11 @@ defmodule Todo.ListTopic do
     value =
       if File.exists?(path) do
         with {:ok, content} <- File.read(path) do
-          :erlang.binary_to_term(content)
+          if content == "" do
+            %{items: %{}, order: []}
+          else
+            :erlang.binary_to_term(content)
+          end
         end
       else
         %{items: %{}, order: []}
@@ -39,8 +43,11 @@ defmodule Todo.ListTopic do
 
   def terminate(_reason, topic) do
     path = get_path(topic.state.list_id)
-    content = :erlang.term_to_binary(topic.value)
-    File.write!(path, content)
+
+    if Enum.any?(topic.value.items) do
+      content = :erlang.term_to_binary(topic.value)
+      File.write!(path, content)
+    end
   end
 
   defp get_path(list_id) do

@@ -101,6 +101,25 @@ function List({ name }: ListProps) {
   );
 }
 
+function Lists() {
+  const [lists, {}] = useTopic<Record<string, true>>("lists");
+  if (lists) {
+    return (
+      <ul>
+        {Object.keys(lists)
+          .sort()
+          .map((list) => (
+            <li key={list}>
+              <List name={list} />
+            </li>
+          ))}
+      </ul>
+    );
+  } else {
+    return <p>Loading...</p>;
+  }
+}
+
 function SocketStatus() {
   const [_socket, state] = useSocket();
   return <p>Socket: {state}</p>;
@@ -111,8 +130,7 @@ export default function App() {
     <SocketProvider url={`ws://${window.location.host}/socket`}>
       <div>
         <SocketStatus />
-        <List name="foo" />
-        <List name="bar" />
+        <Lists />
       </div>
     </SocketProvider>
   );

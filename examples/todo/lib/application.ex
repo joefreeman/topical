@@ -8,7 +8,7 @@ defmodule Todo.Application do
     port = 3000
 
     children = [
-      {Topical, name: Todo.Registry, topics: [Todo.ListTopic]},
+      {Topical, name: Todo.Registry, topics: [Todo.ListsTopic, Todo.ListTopic]},
       {Todo.Web, port: port}
     ]
 
