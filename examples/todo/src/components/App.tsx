@@ -73,11 +73,12 @@ function Form({ onSubmit }: FormProps) {
 }
 
 type ListProps = {
+  id: string;
   name: string;
 };
 
-function List({ name }: ListProps) {
-  const topic = `lists/${name}`;
+function List({ id, name }: ListProps) {
+  const topic = `lists/${id}`;
   const [list, { execute, notify }] = useTopic<models.List>(topic);
   const handleSubmit = useCallback(
     (text: string) => execute("add_item", text),
@@ -88,7 +89,8 @@ function List({ name }: ListProps) {
     [notify]
   );
   return (
-    <div>
+    <div className="list">
+      <h1>{name}</h1>
       {list ? (
         <Fragment>
           <Items list={list} onDoneChange={handleDoneChange} />
@@ -102,17 +104,27 @@ function List({ name }: ListProps) {
 }
 
 function Lists() {
-  const [lists, {}] = useTopic<Record<string, true>>("lists");
+  const [lists, { execute }] =
+    useTopic<{ id: string; name: string }[]>("lists");
+  const handleAddClick = useCallback(() => {
+    const name = prompt("Enter list name:");
+    if (name) {
+      execute("add_list", name).catch(() => {
+        alert("Failed to add list. Please try again.");
+      });
+    }
+  }, [execute]);
   if (lists) {
     return (
-      <ul>
-        {Object.keys(lists)
-          .sort()
-          .map((list) => (
-            <li key={list}>
-              <List name={list} />
-            </li>
-          ))}
+      <ul className="lists">
+        {lists.map(({ id, name }) => (
+          <li key={id}>
+            <List id={id} name={name} />
+          </li>
+        ))}
+        <li>
+          <button onClick={handleAddClick}>+</button>
+        </li>
       </ul>
     );
   } else {
