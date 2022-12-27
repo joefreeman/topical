@@ -52,8 +52,9 @@ defmodule Topical.Topic do
     update(topic, {:unset, path, key})
   end
 
-  def insert(topic, path, index, value) do
-    update(topic, {:insert, path, index, [value]})
+  def insert(topic, path, index \\ nil, value) do
+    value = List.wrap(value)
+    update(topic, {:insert, path, index, value})
   end
 
   def delete(topic, path, index, count \\ 1) do

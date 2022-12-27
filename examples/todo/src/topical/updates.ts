@@ -45,11 +45,10 @@ export function applyUpdate(current: any, update: Update): any {
     }
     case 2: {
       const [index, values] = rest;
-      return updateIn(current, path, (list) => [
-        ...list.slice(0, index),
-        ...(values as any[]),
-        ...list.slice(index),
-      ]);
+      return updateIn(current, path, (list) => {
+        const i = index === null ? list.length : index;
+        return [...list.slice(0, i), ...(values as any[]), ...list.slice(i)];
+      });
     }
     case 3: {
       const [index, count] = rest;

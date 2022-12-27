@@ -23,8 +23,7 @@ defmodule Todo.ListTopic do
     topic =
       topic
       |> Topic.set([:items, id], %{text: text})
-      # TODO: insert/append?
-      |> Topic.set([:order], topic.value.order ++ [id])
+      |> Topic.insert([:order], id)
 
     {:ok, id, topic}
   end

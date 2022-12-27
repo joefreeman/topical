@@ -38,6 +38,10 @@ defmodule Topical.Topic.Update do
     values
   end
 
+  defp insert_at(list, nil, values) do
+    list ++ values
+  end
+
   defp insert_at(list, 0, values) do
     values ++ list
   end
