@@ -26,13 +26,10 @@ todo-*.tar
 /tmp/
 
 # npm packages
-/node_modules
-
-# direnv
-/.direnv
+/node_modules/
 
 # list files
-/lists
+/data/
 
 # JS bundle
 /priv/static/assets/bundle.js

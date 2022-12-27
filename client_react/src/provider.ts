@@ -5,8 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
-
-import Socket from "./socket";
+import { Socket } from "@topical/core";
 
 export const Context = createContext<Socket | undefined>(undefined);
 

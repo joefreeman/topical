@@ -1,0 +1,21 @@
+{
+  "name": "@topical/core",
+  "version": "0.0.0",
+  "description": "Vanilla Topical client.",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run clean && npm run build",
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joefreeman/topical.git"
+  },
+  "author": "Joe Freeman",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/joefreeman/topical#readme",
+  "files": ["dist"]
+}

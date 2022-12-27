@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
+import { Socket, SocketState } from "@topical/core";
 
 import { Context } from "./provider";
-import Socket, { SocketState } from "./socket";
 
 export default function useSocket(): [
   Socket | undefined,

@@ -120,7 +120,7 @@ export default class Socket {
     this.subscriptions[channelId] = topic;
   }
 
-  private handleSocketOpen = (ev: Event) => {
+  private handleSocketOpen = () => {
     notify(this.listeners, "connected");
     Object.keys(this.topics).forEach((topic) => {
       if (!this.topics[topic].channelId) {
@@ -184,17 +184,19 @@ export default class Socket {
     this.topics[topic].listeners.forEach((l) => l.onUpdate(value));
   }
 
-  private handleSocketClose = (ev: Event) => {
+  private handleSocketClose = () => {
     notify(this.listeners, "disconnected");
     this.socket.removeEventListener("open", this.handleSocketOpen);
     this.socket.removeEventListener("error", this.handleSocketError);
     this.socket.removeEventListener("message", this.handleSocketMessage);
     this.socket.removeEventListener("close", this.handleSocketClose);
-    Object.values(this.topics).forEach((topic) => {
-      topic.channelId = undefined;
-    });
+    for (const topic in this.topics) {
+      this.topics[topic].channelId = undefined;
+    }
     this.subscriptions = {};
-    Object.values(this.requests).forEach(({ onError }) => onError());
+    for (const requestId in this.requests) {
+      this.requests[requestId].onError();
+    }
     this.requests = {};
     if (!this.closed) {
       // TODO: backoff (with jitter)
