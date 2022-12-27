@@ -18,14 +18,14 @@ function Item({ item, itemId, onDoneChange }: ItemProps) {
     [itemId, onDoneChange]
   );
   return (
-    <Fragment>
+    <div className="item">
       <input
         type="checkbox"
         checked={item.done || false}
         onChange={handleDoneChange}
       />
       {item.text}
-    </Fragment>
+    </div>
   );
 }
 
@@ -67,7 +67,12 @@ function Form({ onSubmit }: FormProps) {
   );
   return (
     <form onSubmit={handleSubmit}>
-      <input type="text" value={text} onChange={handleChange} />
+      <input
+        type="text"
+        placeholder="Add an item..."
+        value={text}
+        onChange={handleChange}
+      />
     </form>
   );
 }
@@ -134,7 +139,7 @@ function Lists() {
 
 function SocketStatus() {
   const [_socket, state] = useSocket();
-  return <p>Socket: {state}</p>;
+  return <p className="socketState">{state}</p>;
 }
 
 export default function App() {

@@ -1,0 +1,63 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: sans-serif;
+}
+
+.socketState {
+  position: fixed;
+  top: 0;
+  right: 0;
+  margin: 0;
+  padding: 5px;
+}
+
+.lists {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 15px;
+}
+
+.lists > li {
+  width: 16rem;
+}
+
+.list {
+  background: #f7f7fa;
+  box-shadow: 0 0.5px 2px #c5c5cf;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.list > h1 {
+  font-size: 1.2rem;
+  margin: 10px;
+  color: #445;
+  font-weight: normal;
+}
+
+.list > ol {
+  list-style: none;
+  padding: 0;
+  margin: 15px 5px;
+}
+
+.list > ol > li {
+  margin: 5px 0;
+}
+
+.list > form > input[type="text"] {
+  width: 100%;
+  border: 1px solid #e5e5ed;
+  background: #fff;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.item {
+  display: flex;
+  align-items: start;
+}
