@@ -1,4 +1,6 @@
 defmodule Topical.Registry do
+  @moduledoc false
+
   def start_link(options) do
     name = Keyword.fetch!(options, :name)
     routes = options |> Keyword.fetch!(:topics) |> build_routes()

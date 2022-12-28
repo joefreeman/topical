@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ChangeEvent, FormEvent, Fragment, useCallback, useState } from "react";
 
-import { SocketProvider, useTopic, useSocket } from "../topical";
+import { SocketProvider, useTopic, useSocket } from "@topical/react";
 import * as models from "../models";
 
 type ItemProps = {

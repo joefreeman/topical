@@ -1,4 +1,6 @@
 defmodule Topical.Topic.Update do
+  @moduledoc false
+
   import Kernel, except: [apply: 2, update_in: 3]
 
   def apply(value, update) do

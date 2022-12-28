@@ -1,28 +1,83 @@
 defmodule Topical.Topic.Server do
+  alias Topical.Topic
+
+  @moduledoc """
+  This module defines the bahaviour of a topic.
+
+  See `Topical.Topic` for a usage example.
+  """
+
+  @doc """
+  Invoked when the topic is started to get the initial state.
+
+  `params` are the values associated with the placeholders in the route.
+  """
+  @callback init(params :: [...]) :: {:ok, %Topic{}}
+
+  @doc """
+  Invoked when a client has executed an action.
+
+  This callback is optional. If one is not implemented, the topic will fail if an action is
+  executed.
+  """
+  @callback handle_execute(action :: term(), args :: tuple(), topic :: %Topic{}) ::
+              {:ok, term(), %Topic{}}
+
+  @doc """
+  Invoked when a client has sent a notification.
+
+  This callback is optional. If one is not implemented, the topic will fail if a notification is
+  received.
+  """
+  @callback handle_notify(action :: term(), args :: tuple(), topic :: %Topic{}) ::
+              {:ok, %Topic{}}
+
+  @doc """
+  Invoked to handle other messages.
+
+  This callback is optional.
+  """
+  @callback handle_info(msg :: term, topic :: %Topic{}) :: {:ok, %Topic{}}
+
+  @doc """
+  Invoked when a topic has been stopped.
+
+  This callback is optional.
+  """
+  @callback terminate(reason :: term, topic :: %Topic{}) :: term
+
   use GenServer, restart: :transient
 
   alias Topical.Topic.Update
 
+  @doc """
+  Starts a topic server process linked to the current process.
+
+  ## Options
+
+    * `:module` - the module that implements the topic behaviour.
+    * `:init_arg` - the argument passed to the topic's `init` callback.
+  """
   def start_link(options) do
     {module, options} = Keyword.pop!(options, :module)
-    {params, options} = Keyword.pop!(options, :params)
-    GenServer.start_link(__MODULE__, {module, params}, options)
+    {init_arg, options} = Keyword.pop!(options, :init_arg)
+    GenServer.start_link(__MODULE__, {module, init_arg}, options)
   end
 
   @impl true
-  def init({module, params}) do
+  def init({module, init_arg}) do
     {:ok,
      %{
        module: module,
        topic: nil,
        subscribers: %{},
        timeout: 10_000
-     }, {:continue, {:init, params}}}
+     }, {:continue, {:init, init_arg}}}
   end
 
   @impl true
-  def handle_continue({:init, params}, state) do
-    {:ok, topic} = state.module.init(params)
+  def handle_continue({:init, init_arg}, state) do
+    {:ok, topic} = state.module.init(init_arg)
     state = Map.put(state, :topic, topic)
     {:noreply, state, timeout(state)}
   end

@@ -1,5 +1,9 @@
 defmodule Topical.Protocol do
+  @moduledoc false
+
   defmodule Request do
+    @moduledoc false
+
     def decode(text) do
       case Jason.decode(text) do
         {:ok, [0, topic, action, args]} ->
@@ -24,6 +28,8 @@ defmodule Topical.Protocol do
   end
 
   defmodule Response do
+    @moduledoc false
+
     def encode_error(channel_id, error) do
       Jason.encode!([0, channel_id, error])
     end

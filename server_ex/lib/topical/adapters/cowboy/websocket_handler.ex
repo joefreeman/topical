@@ -1,11 +1,28 @@
 defmodule Topical.Adapters.Cowboy.WebsocketHandler do
+  @moduledoc """
+  A Websocket handler adapter for a Cowboy web server.
+
+  Pass the name of the Topical registry.
+
+  ## Example
+
+      :cowboy_router.compile([
+        {:_,
+         [
+           # ...
+           {"/socket", WebsocketHandler, registry: MyApp.Topical}
+         ]}
+      ])
+  """
   alias Topical.Protocol.{Request, Response}
 
+  @doc false
   def init(req, opts) do
     registry = Keyword.fetch!(opts, :registry)
     {:cowboy_websocket, req, registry}
   end
 
+  @doc false
   def websocket_init(registry) do
     state = %{
       registry: registry,
@@ -16,6 +33,7 @@ defmodule Topical.Adapters.Cowboy.WebsocketHandler do
     {[], state}
   end
 
+  @doc false
   def websocket_handle({:text, text}, state) do
     case Request.decode(text) do
       {:ok, :notify, topic, action, args} ->
@@ -32,15 +50,18 @@ defmodule Topical.Adapters.Cowboy.WebsocketHandler do
     end
   end
 
+  @doc false
   def websocket_handle(_data, state) do
     {[], state}
   end
 
+  @doc false
   def websocket_info({:reset, ref, value}, state) do
     channel_id = Map.fetch!(state.channel_ids, ref)
     {[{:text, Response.encode_topic_reset(channel_id, value)}], state}
   end
 
+  @doc false
   def websocket_info({:updates, ref, updates}, state) do
     channel_id = Map.fetch!(state.channel_ids, ref)
 
@@ -49,10 +70,12 @@ defmodule Topical.Adapters.Cowboy.WebsocketHandler do
      ], state}
   end
 
+  @doc false
   def websocket_info(_info, state) do
     {[], state}
   end
 
+  @doc false
   def handle_notify(topic, action, args, state) do
     # TODO: handle some errors (e.g., with lookup/init topic?)
     case Topical.notify(state.registry, topic, action, List.to_tuple(args)) do
@@ -87,7 +110,7 @@ defmodule Topical.Adapters.Cowboy.WebsocketHandler do
     end
   end
 
-  def handle_unsubscribe(channel_id, state) do
+  defp handle_unsubscribe(channel_id, state) do
     case Map.fetch(state.channels, channel_id) do
       {:ok, {topic, ref}} ->
         :ok = Topical.unsubscribe(state.registry, topic, ref)

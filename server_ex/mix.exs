@@ -9,7 +9,8 @@ defmodule Topical.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
-      package: package()
+      package: package(),
+      docs: docs()
     ]
   end
 
@@ -37,6 +38,17 @@ defmodule Topical.MixProject do
       maintainers: ["Joe Freeman"],
       licenses: ["Apache-2.0"],
       links: %{GitHub: "https://github.com/joefreeman/topical"}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: [
+        "docs/introduction.md",
+        "docs/getting-started.md",
+        "docs/cowboy-adapter.md",
+        "docs/javascript-client.md"
+      ]
     ]
   end
 end
