@@ -81,7 +81,7 @@ defmodule Topical.Registry do
                name: {:via, Registry, {registry_name, route}},
                id: route,
                module: module,
-               params: params}
+               init_arg: params}
 
             case DynamicSupervisor.start_child(supervisor_name, spec) do
               {:ok, pid} -> {:ok, pid}
