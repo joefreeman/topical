@@ -50,11 +50,6 @@ defmodule MyApp.Topics.List do
     topic  = Topic.set(topic, [:items, id, :done], true)
     {:ok, topic}
   end
-
-  # Optionally, handle the topic being terminated (e.g., once clients have disconnected)
-  def terminate(_reason, topic) do
-    # ...
-  end
 end
 ```
 

@@ -15,12 +15,26 @@ defmodule Topical.Topic.Server do
   @callback init(params :: [...]) :: {:ok, %Topic{}}
 
   @doc """
+  Invoked before a client subscribes (but after initialisation).
+
+  This callback is optional.
+  """
+  @callback handle_subscribe(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
+
+  @doc """
+  Invoked after a client unsubscribes (either explicitly or because the process dies).
+
+  This callback is optional.
+  """
+  @callback handle_unsubscribe(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
+
+  @doc """
   Invoked when a client has executed an action.
 
   This callback is optional. If one is not implemented, the topic will fail if an action is
   executed.
   """
-  @callback handle_execute(action :: term(), args :: tuple(), topic :: %Topic{}) ::
+  @callback handle_execute(action :: term(), args :: tuple(), topic :: %Topic{}, context :: any()) ::
               {:ok, term(), %Topic{}}
 
   @doc """
@@ -29,7 +43,7 @@ defmodule Topical.Topic.Server do
   This callback is optional. If one is not implemented, the topic will fail if a notification is
   received.
   """
-  @callback handle_notify(action :: term(), args :: tuple(), topic :: %Topic{}) ::
+  @callback handle_notify(action :: term(), args :: tuple(), topic :: %Topic{}, context :: any()) ::
               {:ok, %Topic{}}
 
   @doc """
@@ -90,14 +104,14 @@ defmodule Topical.Topic.Server do
 
   @impl true
   def handle_cast({:unsubscribe, ref}, state) do
-    state = remove_subscriber(state, ref)
     Process.demonitor(ref)
+    state = remove_subscriber(state, ref)
     {:noreply, state, timeout(state)}
   end
 
   @impl true
-  def handle_cast({:notify, action, args}, state) do
-    case state.module.handle_notify(action, args, state.topic) do
+  def handle_cast({:notify, action, args, context}, state) do
+    case state.module.handle_notify(action, args, state.topic, context) do
       {:ok, topic} ->
         state = process(state, topic)
         {:noreply, state, timeout(state)}
@@ -105,15 +119,20 @@ defmodule Topical.Topic.Server do
   end
 
   @impl true
-  def handle_call({:subscribe, pid}, _from, state) do
-    ref = Process.monitor(pid)
-    state = put_in(state.subscribers[ref], pid)
-    {:reply, ref, state, {:continue, {:subscribe, ref, pid}}}
+  def handle_call({:subscribe, pid, context}, _from, state) do
+    case state.module.handle_subscribe(state.topic, context) do
+      {:ok, topic} ->
+        state = process(state, topic)
+        ref = Process.monitor(pid)
+        subscriber = %{pid: pid, context: context}
+        state = put_in(state.subscribers[ref], subscriber)
+        {:reply, ref, state, {:continue, {:subscribe, ref, pid}}}
+    end
   end
 
   @impl true
-  def handle_call({:execute, action, args}, _from, state) do
-    case state.module.handle_execute(action, args, state.topic) do
+  def handle_call({:execute, action, args, context}, _from, state) do
+    case state.module.handle_execute(action, args, state.topic, context) do
       {:ok, reply, topic} ->
         state = process(state, topic)
         {:reply, reply, state, timeout(state)}
@@ -167,13 +186,17 @@ defmodule Topical.Topic.Server do
   end
 
   defp notify_subscribers(subscribers, updates) do
-    Enum.each(subscribers, fn {ref, pid} ->
-      send(pid, {:updates, ref, updates})
+    Enum.each(subscribers, fn {ref, subscriber} ->
+      send(subscriber.pid, {:updates, ref, updates})
     end)
   end
 
   defp remove_subscriber(state, ref) do
-    {_, state} = pop_in(state.subscribers[ref])
-    state
+    {subscriber, state} = pop_in(state.subscribers[ref])
+
+    case state.module.handle_unsubscribe(state.topic, subscriber.context) do
+      {:ok, topic} ->
+        process(state, topic)
+    end
   end
 end

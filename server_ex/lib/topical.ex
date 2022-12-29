@@ -43,10 +43,10 @@ defmodule Topical do
       #=> {:ok, #Reference<0.4021726225.4145020932.239110>}
 
   """
-  def subscribe(registry, topic, pid) do
+  def subscribe(registry, topic, pid, context \\ nil) do
     with {:ok, server} <- Registry.get_topic(registry, topic) do
       # TODO: monitor/link server?
-      {:ok, GenServer.call(server, {:subscribe, pid})}
+      {:ok, GenServer.call(server, {:subscribe, pid, context})}
     end
   end
 
@@ -74,9 +74,9 @@ defmodule Topical do
       #=> {:ok, "item123"}
 
   """
-  def execute(registry, topic, action, args \\ {}) do
+  def execute(registry, topic, action, args \\ {}, context \\ nil) do
     with {:ok, server} <- Registry.get_topic(registry, topic) do
-      {:ok, GenServer.call(server, {:execute, action, args})}
+      {:ok, GenServer.call(server, {:execute, action, args, context})}
     end
   end
 
@@ -91,9 +91,9 @@ defmodule Topical do
       #=> :ok
 
   """
-  def notify(registry, topic, action, args \\ {}) do
+  def notify(registry, topic, action, args \\ {}, context \\ nil) do
     with {:ok, server} <- Registry.get_topic(registry, topic) do
-      GenServer.cast(server, {:notify, action, args})
+      GenServer.cast(server, {:notify, action, args, context})
     end
   end
 end

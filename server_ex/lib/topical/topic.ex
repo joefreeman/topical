@@ -23,8 +23,18 @@ defmodule Topical.Topic do
           {:ok, topic}
         end
 
+        # Optionally, handle subscribe
+        def handle_subscribe(topic, _context) do
+          {:ok, topic}
+        end
+
+        # Optionally, handle unsubscribe
+        def handle_unsubscribe(topic, _context) do
+          {:ok, topic}
+        end
+
         # Optionally, handle execution of an action
-        def handle_execute("add_item", {text}, topic) do
+        def handle_execute("add_item", {text}, topic, _context) do
           id = Integer.to_string(:erlang.system_time())
 
           # Update the topic by putting the item in 'items', and appending the id to 'order'
@@ -38,7 +48,7 @@ defmodule Topical.Topic do
         end
 
         # Optionally, handle a notification (an action without a result)
-        def handle_notify("update_text", {id, text}, topic) do
+        def handle_notify("update_text", {id, text}, topic, _context) do
           topic  = Topic.set(topic, [:items, id, :text], text)
           {:ok, topic}
         end
@@ -69,11 +79,19 @@ defmodule Topical.Topic do
         unquote(Keyword.fetch!(opts, :route))
       end
 
-      def handle_execute(_action, _args, _topic) do
+      def handle_subscribe(topic, _context) do
+        {:ok, topic}
+      end
+
+      def handle_unsubscribe(topic, _context) do
+        {:ok, topic}
+      end
+
+      def handle_execute(_action, _args, _topic, _context) do
         raise "no handle_execute/3 implemented"
       end
 
-      def handle_notify(_action, _args, _topic) do
+      def handle_notify(_action, _args, _topic, _context) do
         raise "no handle_notify/3 implemented"
       end
 
@@ -86,7 +104,12 @@ defmodule Topical.Topic do
         :ok
       end
 
-      defoverridable handle_execute: 3, handle_notify: 3, handle_info: 2, terminate: 2
+      defoverridable handle_subscribe: 2,
+                     handle_unsubscribe: 2,
+                     handle_execute: 4,
+                     handle_notify: 4,
+                     handle_info: 2,
+                     terminate: 2
     end
   end
 
