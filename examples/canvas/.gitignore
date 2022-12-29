@@ -1,0 +1,6 @@
+/_build/
+/deps/
+/doc/
+/node_modules/
+/erl_crash.dump
+/priv/static/assets/bundle.js
