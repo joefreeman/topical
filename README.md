@@ -2,10 +2,14 @@
 
 _Simple server-maintained state synchronisation._
 
-Implement an Elixir module, which defines how to: initialise the topic when needed, react to
-requests from connected clients, and/or handle server-side events. On the client side you can use a
-React hook (or the JavaScript library directly) to get a copy of the state that updates in
-real-time.
+Implement an Elixir module, which defines how to initialise and maintain a 'topic'. On the client
+side, use a React hook (or the JavaScript library directly) to get a live-updating copy of the
+state. Topical takes care of starting and stopping topics as needed, and synchronising state
+efficiently.
+
+Multiple clients (users) can share a single topic.
+
+## Example (todo list)
 
 For example a partial implementation of a todo list topic:
 
@@ -72,22 +76,19 @@ function App() {
 }
 ```
 
-(See `examples/todo` for a more complete example.)
+See `examples/todo` for a more complete example.
 
-Updates are sent efficiently over a WebSocket connection. The server takes care of starting topics
-when needed, and stopping them when no clients are connected. Multiple clients (and users) can
-share a single instance of a topic.
+## Documentation
 
-## Repository
+Documentation is available on [HexDocs](https://hexdocs.pm/topical/).
+
+## Development
 
 This repository is separated into:
 
   - `server_ex` - the Elixir library for implementing topic servers, including a WebSocket adapter for the Cowboy web server.
   - `client_js` - the vanilla JavaScript WebSocket client.
   - `client_react` - React hooks built on top of the JavaScript client.
-  - `examples/todo` - a complete todo list example.
-
-More complete documentation is associated with the Elixir project, and is available on [HexDocs](https://hexdocs.pm/topical/).
 
 ## License
 
