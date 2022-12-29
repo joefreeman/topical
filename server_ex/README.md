@@ -1,4 +1,4 @@
-# [Topical](../) → Server (Elixir)
+# Topical → Server (Elixir)
 
 This is the Topical server.
 

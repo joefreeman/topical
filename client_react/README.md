@@ -1,4 +1,4 @@
-# [Topical](../) → Client (React)
+# Topical → Client (React)
 
 This is the React JavaScript client.
 

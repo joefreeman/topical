@@ -51,14 +51,7 @@ function TodoList({ id}) {
         <ol>
           {list.order.map((itemId) => {
             const { text, done } = list.items[itemId];
-            return (
-              <li
-                key={itemId}
-                className={done ? "done" : undefined}
-              >
-                {text}
-              </li>
-            );
+            return <li key={itemId} className={done ? "done" : undefined}>{text}</li>;
           })}
         </ol>
         <button onClick={handleAddClick}>Add item</button>
@@ -78,6 +71,8 @@ function App() {
   );
 }
 ```
+
+(See `examples/todo` for a more complete example.)
 
 Updates are sent efficiently over a WebSocket connection. The server takes care of starting topics
 when needed, and stopping them when no clients are connected. Multiple clients (and users) can

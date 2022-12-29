@@ -1,4 +1,4 @@
-# [Topical](../) → Client (JavaScript)
+# Topical → Client (JavaScript)
 
 This is the vanilla JavaScript client.
 

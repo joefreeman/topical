@@ -1,3 +1,3 @@
-# [Topical](../../) → Examples → Todo
+# Topical/Examples → Todo
 
-This is as a todo list example.
+This is a todo list example.
