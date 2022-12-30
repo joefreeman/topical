@@ -17,8 +17,14 @@ body {
   height: 100vh;
 }
 
+.canvas > svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
 .cursor {
+  position: absolute;
   width: 20px;
   height: 20px;
-  position: absolute;
 }

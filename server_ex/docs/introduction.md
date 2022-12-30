@@ -14,9 +14,9 @@ disconnected.
 ## Uses
 
 Topics are implemented in Elixir, and behave somewhat like GenServers - the main difference being
-that their state is easily observable by clients. There's more flexibility on the client side - the
-main benefit comes from using the JavaScript (and React) client (and Cowboy WebSocket adpater) to
-observe the state, but it's also possible to use the Elixir API.
+that their state is easily observable by clients. The main benefit comes from using the JavaScript
+(and React) client (and Cowboy WebSocket adpater) to observe the state, but it's also possible to
+use the Elixir API.
 
 There's a certain amount of flexibility in how topics are implemented. They can be be used to track
 ephemeral state - for example user presence, or cursor positions. They can be backed by simple
