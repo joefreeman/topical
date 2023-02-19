@@ -48,7 +48,7 @@ And a corresponding React component:
 import { SocketProvider, useTopic } from "topical";
 
 function TodoList({ id}) {
-  const [list, { execute }] = useTopic(`lists/${id}`);
+  const [list, { execute }] = useTopic("lists", id);
   const handleAddClick = useCallback(() => execute("add_item", prompt()), [execute]);
   if (list) {
     return (
