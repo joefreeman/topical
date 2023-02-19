@@ -24,7 +24,7 @@ defmodule Topical.Registry do
         |> String.split("/")
         |> Enum.map(fn
           ":" <> atom -> String.to_atom(atom)
-          part -> part
+          part -> URI.decode(part)
         end)
 
       {route, module}
@@ -32,7 +32,10 @@ defmodule Topical.Registry do
   end
 
   defp resolve_route(route, routes) do
-    parts = String.split(route, "/")
+    parts =
+      route
+      |> String.split("/")
+      |> Enum.map(&URI.decode/1)
 
     Enum.find_value(routes, fn {route, module} ->
       match = match_route(parts, route)

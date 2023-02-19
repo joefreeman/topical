@@ -22,6 +22,21 @@ function notify(listeners: ((...args: any[]) => void)[], ...args: any[]) {
   listeners.forEach((listener) => listener(...args));
 }
 
+function encodeRFC3986(s: string) {
+  return encodeURIComponent(s)
+    .replace(
+      /[!'()*]/g,
+      (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+    );
+}
+
+function encodeTopic(parts: (string | undefined)[]) {
+  if (parts.some((p) => typeof p == "undefined")) {
+    throw new Error("topic component is undefined")
+  }
+  return parts.map((p) => encodeRFC3986(p!)).join('/');
+}
+
 export default class Socket {
   private socket: WebSocket;
   private closed = false;
@@ -66,30 +81,33 @@ export default class Socket {
     this.socket.close();
   }
 
-  execute(topic: string, action: string, ...args: any[]) {
+  execute(topicParts: (string | undefined)[], action: string, ...args: any[]) {
     if (!this.isConnected()) {
       return Promise.reject("not connected");
     }
     const channelId = ++this.lastChannelId;
+    const topic = encodeTopic(topicParts);
     this.socket.send(JSON.stringify([1, channelId, topic, action, args]));
     return new Promise((resolve, reject) => {
       this.requests[channelId] = { onError: reject, onSuccess: resolve };
     });
   }
 
-  notify(topic: string, action: string, ...args: any[]) {
+  notify(topicParts: (string | undefined)[], action: string, ...args: any[]) {
     if (!this.isConnected()) {
       return Promise.reject("not connected");
     }
+    const topic = encodeTopic(topicParts);
     this.socket.send(JSON.stringify([0, topic, action, args]));
   }
 
   subscribe<T>(
-    topic: string,
+    topicParts: (string | undefined)[],
     onUpdate: (value: T) => void,
     onError?: (error: any) => void
   ) {
     const listener = { onUpdate, onError };
+    const topic = encodeTopic(topicParts);
     if (topic in this.topics) {
       this.topics[topic].listeners.push(listener);
       listener.onUpdate(this.topics[topic].value);
