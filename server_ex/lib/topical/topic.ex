@@ -88,11 +88,11 @@ defmodule Topical.Topic do
       end
 
       def handle_execute(_action, _args, _topic, _context) do
-        raise "no handle_execute/3 implemented"
+        raise "no handle_execute/4 implemented"
       end
 
       def handle_notify(_action, _args, _topic, _context) do
-        raise "no handle_notify/3 implemented"
+        raise "no handle_notify/4 implemented"
       end
 
       def handle_info(_msg, topic) do

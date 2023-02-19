@@ -20,7 +20,7 @@ defmodule MyApp.Topics.List do
   end
 
   # Optionally, handle execution of an action
-  def handle_execute("add_item", {text}, topic) do
+  def handle_execute("add_item", {text}, topic, _context) do
     {id, topic} = generate_item_id(topic)
 
     # Update the topic by putting the item in 'items', and appending the id to 'order'

@@ -27,7 +27,7 @@ defmodule MyApp.Topics.List do
   end
 
   # Handle an 'add_item' request from a client
-  def handle_execute("add_item", {text}, topic) do
+  def handle_execute("add_item", {text}, topic, _context) do
     id = Integer.to_string(:erlang.system_time())
 
     # Update the topic by putting the item in 'items', and appending the ID to 'order'
