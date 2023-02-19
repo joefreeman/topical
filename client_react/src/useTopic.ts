@@ -16,19 +16,19 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
     (action: string, ...args: any[]) => {
       return socket!.notify(topicParts, action, ...args);
     },
-    [socket, topicParts]
+    [socket, ...topicParts]
   );
   const execute = useCallback(
     (action: string, ...args: any[]) => {
       return socket!.execute(topicParts, action, ...args);
     },
-    [socket, topicParts]
+    [socket, ...topicParts]
   );
   useEffect(() => {
     if (!topicParts.some((p) => typeof p == "undefined")) {
       return socket?.subscribe(topicParts, setValue, setError);
     }
-  }, [socket, topicParts]);
+  }, [socket, ...topicParts]);
   if (error) {
     throw new Error(error);
   }
