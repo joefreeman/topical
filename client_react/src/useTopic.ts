@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from "react";
 
 import { Context } from "./provider";
 
-export default function useTopic<T>(topic: string | undefined): [
+export default function useTopic<T>(...topicParts: (string | undefined)[]): [
   T | undefined,
   {
     notify: (action: string, ...args: any[]) => void;
@@ -14,27 +14,21 @@ export default function useTopic<T>(topic: string | undefined): [
   const [error, setError] = useState<any>();
   const notify = useCallback(
     (action: string, ...args: any[]) => {
-      if (typeof topic == "undefined") {
-        throw new Error("topic is undefined");
-      }
-      return socket!.notify(topic, action, ...args);
+      return socket!.notify(topicParts, action, ...args);
     },
-    [socket, topic]
+    [socket, topicParts]
   );
   const execute = useCallback(
     (action: string, ...args: any[]) => {
-      if (typeof topic == "undefined") {
-        throw new Error("topic is undefined");
-      }
-      return socket!.execute(topic, action, ...args);
+      return socket!.execute(topicParts, action, ...args);
     },
-    [socket, topic]
+    [socket, topicParts]
   );
   useEffect(() => {
-    if (topic) {
-      return socket?.subscribe(topic, setValue, setError);
+    if (!topicParts.some((p) => typeof p == "undefined")) {
+      return socket?.subscribe(topicParts, setValue, setError);
     }
-  }, [socket, topic]);
+  }, [socket, topicParts]);
   if (error) {
     throw new Error(error);
   }

@@ -21,7 +21,7 @@
     "dist"
   ],
   "dependencies": {
-    "@topical/core": "^0.1.0",
+    "@topical/core": "^0.1.1",
     "react": "^18.2.0"
   },
   "devDependencies": {
