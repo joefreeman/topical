@@ -2,12 +2,11 @@
 
 _Simple server-maintained state synchronisation._
 
-Implement an Elixir module, which defines how to initialise and maintain a 'topic'. On the client
-side, use a React hook (or the JavaScript library directly) to get a live-updating copy of the
-state. Topical takes care of starting and stopping topics as needed, and synchronising state
-efficiently.
+Implement an Elixir module to define how to initialise and maintain a 'topic'. On the client side,
+use a React hook (or the JavaScript library directly) to get a live-updating copy of the state.
+Topical takes care of starting and stopping topics as needed, and synchronising state efficiently.
 
-Multiple clients (users) can share a single topic.
+Multiple clients can share a single topic.
 
 ## Example (todo list)
 
@@ -17,6 +16,7 @@ For example a partial implementation of a todo list topic:
 defmodule MyApp.Topics.List do
   use Topical.Topic, route: "lists/:list_id"
 
+  # Initialise the topic
   def init(params) do
     # Get the ID from the route (unused here)
     list_id = Keyword.fetch!(params, :list_id)
@@ -26,6 +26,7 @@ defmodule MyApp.Topics.List do
     {:ok, Topic.new(value)}
   end
 
+  # Handle an 'add_item' request from a client
   def handle_execute("add_item", {text}, topic) do
     id = Integer.to_string(:erlang.system_time())
 
