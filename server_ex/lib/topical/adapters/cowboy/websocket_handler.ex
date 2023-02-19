@@ -69,17 +69,26 @@ defmodule Topical.Adapters.Cowboy.WebsocketHandler do
 
   @doc false
   def websocket_info({:reset, ref, value}, state) do
-    channel_id = Map.fetch!(state.channel_ids, ref)
-    {[{:text, Response.encode_topic_reset(channel_id, value)}], state}
+    case Map.fetch(state.channel_ids, ref) do
+      {:ok, channel_id} ->
+        {[{:text, Response.encode_topic_reset(channel_id, value)}], state}
+
+      :error ->
+        {[], state}
+    end
   end
 
   @doc false
   def websocket_info({:updates, ref, updates}, state) do
-    channel_id = Map.fetch!(state.channel_ids, ref)
+    case Map.fetch(state.channel_ids, ref) do
+      {:ok, channel_id} ->
+        {[
+           {:text, Response.encode_topic_updates(channel_id, updates)}
+         ], state}
 
-    {[
-       {:text, Response.encode_topic_updates(channel_id, updates)}
-     ], state}
+      :error ->
+        {[], state}
+    end
   end
 
   @doc false
