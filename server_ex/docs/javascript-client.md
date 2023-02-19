@@ -20,18 +20,18 @@ const socket = new Socket("ws://example.com/socket");
 
 // Subscribe to a topic (returns a function to unsibscribe)
 const unsubscribe = socket.subscribe<ListModel>(
-  "lists/foo",
+  ["lists", "foo"],
   (list: ListModel) => { console.log(value); },
   (error) => { ... }
 );
 
 // Execute an action
-const itemId = await socket.execute("lists/foo", "add_item", "First item");
+const itemId = await socket.execute(["lists", "foo"], "add_item", "First item");
 
 // (The subscription should have been updated)
 
 // Send a notification
-socket.notify("lists/foo", "update_item", itemId, "Inaugural item")
+socket.notify(["lists", "foo"], "update_item", itemId, "Inaugural item")
 
 // (The subscription should have been updated again)
 
@@ -72,7 +72,7 @@ Then use the `useTopic` hook in your components to subscribe to your topic:
 import { useTopic } from "@topical/react";
 
 function List({ id }) {
-  const [list, { execute, notify }] = useTopic<models.List>(`lists/${id}`);
+  const [list, { execute, notify }] = useTopic<models.List>("lists", id);
   const addItem = useCallback(
     (text: string) => execute("add_item", text),
     [execute]
