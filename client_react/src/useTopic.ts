@@ -25,6 +25,7 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
     [socket, ...topicParts]
   );
   useEffect(() => {
+    setValue(undefined);
     if (!topicParts.some((p) => typeof p == "undefined")) {
       return socket?.subscribe(topicParts, setValue, setError);
     }
