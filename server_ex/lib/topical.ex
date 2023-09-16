@@ -66,6 +66,20 @@ defmodule Topical do
   end
 
   @doc """
+  Captures the state of the `topic` (in the specified `registry`) without subscribing.
+
+  ## Example
+
+      Topical.capture(MyApp.Topical, "lists/foo")
+      # => {:ok, %{items: %{}, order: []}}
+  """
+  def capture(registry, topic, context \\ nil) do
+    with {:ok, server} <- Registry.get_topic(registry, topic) do
+      {:ok, GenServer.call(server, {:capture, context})}
+    end
+  end
+
+  @doc """
   Executes an action in a `topic`.
 
   ## Example

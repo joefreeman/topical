@@ -29,6 +29,13 @@ defmodule Topical.Topic.Server do
   @callback handle_unsubscribe(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
 
   @doc """
+  Invoked before state is captured (after initialisation).
+
+  This callback is optional.
+  """
+  @callback handle_capture(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
+
+  @doc """
   Invoked when a client has executed an action.
 
   This callback is optional. If one is not implemented, the topic will fail if an action is
@@ -127,6 +134,15 @@ defmodule Topical.Topic.Server do
         subscriber = %{pid: pid, context: context}
         state = put_in(state.subscribers[ref], subscriber)
         {:reply, ref, state, {:continue, {:subscribe, ref, pid}}}
+    end
+  end
+
+  @impl true
+  def handle_call({:capture, context}, _from, state) do
+    case state.module.handle_capture(state.topic, context) do
+      {:ok, topic} ->
+        state = process(state, topic)
+        {:reply, topic.value, state, timeout(state)}
     end
   end
 

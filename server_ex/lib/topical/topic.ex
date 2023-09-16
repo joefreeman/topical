@@ -33,6 +33,11 @@ defmodule Topical.Topic do
           {:ok, topic}
         end
 
+        # Optionally, handle capture
+        def handle_capture(topic, _context) do
+          {:ok, topic}
+        end
+
         # Optionally, handle execution of an action
         def handle_execute("add_item", {text}, topic, _context) do
           id = Integer.to_string(:erlang.system_time())
@@ -87,6 +92,10 @@ defmodule Topical.Topic do
         {:ok, topic}
       end
 
+      def handle_capture(topic, _context) do
+        {:ok, topic}
+      end
+
       def handle_execute(_action, _args, _topic, _context) do
         raise "no handle_execute/4 implemented"
       end
@@ -106,6 +115,7 @@ defmodule Topical.Topic do
 
       defoverridable handle_subscribe: 2,
                      handle_unsubscribe: 2,
+                     handle_capture: 2,
                      handle_execute: 4,
                      handle_notify: 4,
                      handle_info: 2,
