@@ -8,13 +8,13 @@ The accompanying JavaScript library (and React hooks) allow clients to easily co
 
 ## Ephemeral or persistent state
 
-In its simplest instance, a topic's state can be ephemeral - i.e., discarded when the topic is shut down. For example, for synchronising cursor positions.
+In its simplest instance, a topic's state can be ephemeral - i.e., discarded when the topic is shut down. For example, for synchronising cursor positions of users (see [canvas](examples/canvas/) example).
 
-Alternatively state could be persisted - e.g., to a database - with the topic subscribing to updates from the database. Or (where lower durability is needed), periodically flushed to disk.
+Alternatively state could be persisted - e.g., to a database - with the topic subscribing to updates from the database, which allows separating mutation logic, and replication of topics. In the case where lower durability can be afforded, state can be periodically flushed to disk.
 
 ## Comparison to LiveView
 
-Topical solves a similar problem to Phoenix LiveView, but at a different abstraction level, by dealing with the underlying state, rather than rendering HTML and handling UI events.
+Topical solves a similar problem to Phoenix LiveView, but at a different abstraction level, by dealing only with the underlying state, rather than rendering HTML and handling UI events.
 
 ## Example (todo list)
 
@@ -85,7 +85,7 @@ function App() {
 }
 ```
 
-See `examples/todo` for a more complete example.
+See [`examples/todo`](examples/todo/) for a more complete example.
 
 ## Documentation
 
@@ -95,9 +95,9 @@ Documentation is available on [HexDocs](https://hexdocs.pm/topical/).
 
 This repository is separated into:
 
-  - `server_ex` - the Elixir library for implementing topic servers, including a WebSocket adapter for the Cowboy web server.
-  - `client_js` - the vanilla JavaScript WebSocket client.
-  - `client_react` - React hooks built on top of the JavaScript client.
+  - [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including a WebSocket adapter for the Cowboy web server.
+  - [`client_js`](client_js/) - the vanilla JavaScript WebSocket client.
+  - [`client_react`](client_react/) - React hooks built on top of the JavaScript client.
 
 ## License
 
