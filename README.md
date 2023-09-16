@@ -1,3 +1,5 @@
+<br />
+
 <p align="center">
   <img src="logo.png" width="350" height="120" alt="Topical" />
 </p>
