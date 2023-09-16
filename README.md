@@ -18,9 +18,9 @@ Alternatively state could be persisted - e.g., to a database - with the topic su
 
 Topical solves a similar problem to Phoenix LiveView, but at a different abstraction level, by dealing only with the underlying state, rather than rendering HTML and handling UI events.
 
-## Example (todo list)
+## Example: todo list
 
-For example a partial implementation of a todo list topic:
+A partial implementation of a todo list topic might look like this:
 
 ```elixir
 defmodule MyApp.Topics.List do
@@ -57,23 +57,30 @@ And a corresponding React component:
 ```typescript
 import { SocketProvider, useTopic } from "topical";
 
-function TodoList({ id}) {
+function TodoList({ id }) {
   const [list, { execute }] = useTopic("lists", id);
-  const handleAddClick = useCallback(() => execute("add_item", prompt()), [execute]);
+  const handleAddClick = useCallback(
+    () => execute("add_item", prompt()),
+    [execute]
+  );
   if (list) {
     return (
       <div>
         <ol>
           {list.order.map((itemId) => {
             const { text, done } = list.items[itemId];
-            return <li key={itemId} className={done ? "done" : undefined}>{text}</li>;
+            return (
+              <li key={itemId} className={done ? "done" : undefined}>
+                {text}
+              </li>
+            );
           })}
         </ol>
         <button onClick={handleAddClick}>Add item</button>
       </div>
     );
   } else {
-    return <p>Loading...</p>
+    return <p>Loading...</p>;
   }
 }
 
@@ -89,6 +96,11 @@ function App() {
 
 See [`examples/todo`](examples/todo/) for a more complete example.
 
+## Other examples
+
+- [`examples/todo`](examples/todo/) - A more complete todo example, with basic persistence.
+- [`examples/canvas`](examples/canvas/) - A simple canvas drawing example, with synchronised cursors.
+
 ## Documentation
 
 Documentation is available on [HexDocs](https://hexdocs.pm/topical/).
@@ -97,9 +109,9 @@ Documentation is available on [HexDocs](https://hexdocs.pm/topical/).
 
 This repository is separated into:
 
-  - [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including a WebSocket adapter for the Cowboy web server.
-  - [`client_js`](client_js/) - the vanilla JavaScript WebSocket client.
-  - [`client_react`](client_react/) - React hooks built on top of the JavaScript client.
+- [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including a WebSocket adapter for the Cowboy web server.
+- [`client_js`](client_js/) - the vanilla JavaScript WebSocket client.
+- [`client_react`](client_react/) - React hooks built on top of the JavaScript client.
 
 ## License
 

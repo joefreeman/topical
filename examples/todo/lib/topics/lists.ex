@@ -16,7 +16,7 @@ defmodule Todo.ListsTopic do
     {:ok, Topic.new(lists)}
   end
 
-  def handle_execute("add_list", {name}, topic) do
+  def handle_execute("add_list", {name}, topic, _context) do
     id = Integer.to_string(:erlang.system_time())
     topic = Topic.insert(topic, [], length(topic.value), %{id: id, name: name})
     content = :erlang.term_to_binary(topic.value)

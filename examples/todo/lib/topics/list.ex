@@ -17,7 +17,7 @@ defmodule Todo.ListTopic do
     {:ok, Topic.new(value, %{list_id: list_id})}
   end
 
-  def handle_execute("add_item", {text}, topic) do
+  def handle_execute("add_item", {text}, topic, _context) do
     id = generate_id(topic.value.items)
 
     topic =
@@ -28,11 +28,11 @@ defmodule Todo.ListTopic do
     {:ok, id, topic}
   end
 
-  def handle_notify("update_text", {id, text}, topic) do
+  def handle_notify("update_text", {id, text}, topic, _context) do
     {:ok, Topic.set(topic, [:items, id, :text], text)}
   end
 
-  def handle_notify("update_done", {id, done}, topic) do
+  def handle_notify("update_done", {id, done}, topic, _context) do
     {:ok, Topic.set(topic, [:items, id, :done], done)}
   end
 
