@@ -1,4 +1,6 @@
-<img src="logo.png" width="350" height="120" alt="Topical" />
+<p align="center">
+  <img src="logo.png" width="350" height="120" alt="Topical" />
+</p>
 
 Topical is an Elixir library for synchronising server-maintained state ('topics') to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
 
