@@ -100,6 +100,7 @@ See [`examples/todo`](examples/todo/) for a more complete example.
 
 - [`examples/todo`](examples/todo/) - A more complete todo example, with basic persistence.
 - [`examples/canvas`](examples/canvas/) - A simple canvas drawing example, with synchronised cursors.
+- [`examples/cache`](examples/cache/) - Using Topical as an incremental cache.
 
 ## Documentation
 
