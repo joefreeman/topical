@@ -5,9 +5,9 @@ defmodule Topical.Adapters.Cowboy.WebsocketHandler do
   ## Options
 
    - `registry` - The name of the Topical registry. Required.
-   - `init` - A function called before upgrading the connection, passed the request. The function
-     must return `{:ok, context}` for the connection to be accepted. This `context` is then passed
-     to topics.
+   - `init` - A function called before upgrading the connection, which is passed the request. The
+     function must return `{:ok, context}` for the connection to be accepted. This `context` is then
+     passed to topics.
 
   ## Example
 
