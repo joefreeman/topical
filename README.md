@@ -1,12 +1,18 @@
-# Topical
+![Topical](logo.png)
 
-_Simple server-maintained state synchronisation._
+Topical is an Elixir library for synchronising server-maintained state ('topics') to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
 
-Implement an Elixir module to define how to initialise and maintain a 'topic'. On the client side,
-use a React hook (or the JavaScript library directly) to get a live-updating copy of the state.
-Topical takes care of starting and stopping topics as needed, and synchronising state efficiently.
+The accompanying JavaScript library (and React hooks) allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
 
-Multiple clients can share a single topic.
+## Ephemeral or persistent state
+
+In its simplest instance, a topic's state can be ephemeral - i.e., discarded when the topic is shut down. For example, for synchronising cursor positions.
+
+Alternatively state could be persisted - e.g., to a database - with the topic subscribing to updates from the database. Or (where lower durability is needed), periodically flushed to disk.
+
+## Comparison to LiveView
+
+Topical solves a similar problem to Phoenix LiveView, but at a different abstraction level, by dealing with the underlying state, rather than rendering HTML and handling UI events.
 
 ## Example (todo list)
 
