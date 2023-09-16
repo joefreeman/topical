@@ -88,6 +88,7 @@ defmodule Topical.Registry do
 
             case DynamicSupervisor.start_child(supervisor_name, spec) do
               {:ok, pid} -> {:ok, pid}
+              {:error, {:already_started, pid}} -> {:ok, pid}
               {:error, reason} -> {:error, reason}
             end
 
