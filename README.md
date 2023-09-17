@@ -1,7 +1,7 @@
 <br />
 
 <p align="center">
-  <img src="logo.png" width="350" height="120" alt="Topical" />
+  <img src="logo.png" width="350" alt="Topical" />
 </p>
 
 Topical is an Elixir library for synchronising server-maintained state ('topics') to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
@@ -110,7 +110,7 @@ Documentation is available on [HexDocs](https://hexdocs.pm/topical/).
 
 This repository is separated into:
 
-- [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including a WebSocket adapter for the Cowboy web server.
+- [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including adapters for the Cowboy web server.
 - [`client_js`](client_js/) - the vanilla JavaScript WebSocket client.
 - [`client_react`](client_react/) - React hooks built on top of the JavaScript client.
 

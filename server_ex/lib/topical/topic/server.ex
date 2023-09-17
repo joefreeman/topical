@@ -17,6 +17,9 @@ defmodule Topical.Topic.Server do
   @doc """
   Invoked before a client subscribes (but after initialisation).
 
+  This callback can be used to update the topic, for example (in combination with
+  `handle_unsubscribe`) to track connected users.
+
   This callback is optional.
   """
   @callback handle_subscribe(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
@@ -98,9 +101,14 @@ defmodule Topical.Topic.Server do
 
   @impl true
   def handle_continue({:init, init_arg}, state) do
-    {:ok, topic} = state.module.init(init_arg)
-    state = Map.put(state, :topic, topic)
-    {:noreply, state, timeout(state)}
+    case state.module.init(init_arg) do
+      {:ok, %Topic{} = topic} ->
+        state = Map.put(state, :topic, topic)
+        {:noreply, state, timeout(state)}
+
+      other ->
+        raise "init/1 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
+    end
   end
 
   @impl true
@@ -119,39 +127,51 @@ defmodule Topical.Topic.Server do
   @impl true
   def handle_cast({:notify, action, args, context}, state) do
     case state.module.handle_notify(action, args, state.topic, context) do
-      {:ok, topic} ->
+      {:ok, %Topic{} = topic} ->
         state = process(state, topic)
         {:noreply, state, timeout(state)}
+
+      other ->
+        raise "handle_notify/4 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
     end
   end
 
   @impl true
   def handle_call({:subscribe, pid, context}, _from, state) do
     case state.module.handle_subscribe(state.topic, context) do
-      {:ok, topic} ->
+      {:ok, %Topic{} = topic} ->
         state = process(state, topic)
         ref = Process.monitor(pid)
         subscriber = %{pid: pid, context: context}
         state = put_in(state.subscribers[ref], subscriber)
         {:reply, ref, state, {:continue, {:subscribe, ref, pid}}}
+
+      other ->
+        raise "handle_subscribe/2 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
     end
   end
 
   @impl true
   def handle_call({:capture, context}, _from, state) do
     case state.module.handle_capture(state.topic, context) do
-      {:ok, topic} ->
+      {:ok, %Topic{} = topic} ->
         state = process(state, topic)
         {:reply, topic.value, state, timeout(state)}
+
+      other ->
+        raise "handle_capture/2 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
     end
   end
 
   @impl true
   def handle_call({:execute, action, args, context}, _from, state) do
     case state.module.handle_execute(action, args, state.topic, context) do
-      {:ok, reply, topic} ->
+      {:ok, reply, %Topic{} = topic} ->
         state = process(state, topic)
         {:reply, reply, state, timeout(state)}
+
+      other ->
+        raise "handle_execute/4 returned unexpected result - expected `{:ok, reply, topic}`; got: #{inspect(other)}"
     end
   end
 
@@ -169,9 +189,12 @@ defmodule Topical.Topic.Server do
   @impl true
   def handle_info(msg, state) do
     case state.module.handle_info(msg, state.topic) do
-      {:ok, topic} ->
+      {:ok, %Topic{} = topic} ->
         state = process(state, topic)
         {:noreply, state, timeout(state)}
+
+      other ->
+        raise "handle_info/2 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
     end
   end
 
@@ -211,8 +234,11 @@ defmodule Topical.Topic.Server do
     {subscriber, state} = pop_in(state.subscribers[ref])
 
     case state.module.handle_unsubscribe(state.topic, subscriber.context) do
-      {:ok, topic} ->
+      {:ok, %Topic{} = topic} ->
         process(state, topic)
+
+      other ->
+        raise "handle_unsubscribe/2 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
     end
   end
 end
