@@ -10,7 +10,7 @@ The package can be installed by adding `topical` to your list of dependencies in
 def deps do
   [
     # ...
-    {:topical, "~> 0.1.0"}
+    {:topical, "~> 0.1.7"}
   ]
 end
 ```
