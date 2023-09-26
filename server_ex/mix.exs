@@ -44,6 +44,7 @@ defmodule Topical.MixProject do
 
   defp docs do
     [
+      main: "introduction",
       extras: [
         "docs/introduction.md",
         "docs/getting-started.md",

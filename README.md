@@ -8,6 +8,8 @@ Topical is an Elixir library for synchronising server-maintained state ('topics'
 
 The accompanying JavaScript library (and React hooks) allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
 
+See the [Getting started](https://hexdocs.pm/topical/getting-started.html) guide.
+
 ## Ephemeral or persistent state
 
 In its simplest instance, a topic's state can be ephemeral - i.e., discarded when the topic is shut down. For example, for synchronising cursor positions of users (see [canvas](examples/canvas/) example).
@@ -31,14 +33,25 @@ defmodule MyApp.Topics.List do
     # Get the ID from the route (unused here)
     list_id = Keyword.fetch!(params, :list_id)
 
-    # Initialise an empty list (alternatively load it from a file/database/service)
+    # TODO: subscribe to events from, e.g., database/pub-sub
+    # TODO: load list from, e.g., database/API
+
     value = %{items: %{}, order: []}
     {:ok, Topic.new(value)}
   end
 
-  # Handle an 'add_item' request from a client
+  # Handle a message - e.g., from subscription
+  def handle_info({:done, id}, topic) do
+    topic = Topic.set(topic, [:items, id, :done], true)
+    {:ok, topic}
+  end
+
+  # Handle a request from a connected client
   def handle_execute("add_item", {text}, topic, _context) do
-    id = Integer.to_string(:erlang.system_time())
+    id =
+      topic.state.items
+      |> Enum.count()
+      |> Integer.to_string()
 
     # Update the topic by putting the item in 'items', and appending the ID to 'order'
     topic =
@@ -64,21 +77,7 @@ function TodoList({ id }) {
     [execute]
   );
   if (list) {
-    return (
-      <div>
-        <ol>
-          {list.order.map((itemId) => {
-            const { text, done } = list.items[itemId];
-            return (
-              <li key={itemId} className={done ? "done" : undefined}>
-                {text}
-              </li>
-            );
-          })}
-        </ol>
-        <button onClick={handleAddClick}>Add item</button>
-      </div>
-    );
+    return ...;
   } else {
     return <p>Loading...</p>;
   }
