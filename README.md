@@ -7,15 +7,9 @@
 <br />
 
 <p align="center">
-  <a href="https://hex.pm/packages/topical">
-    <img src="https://img.shields.io/hexpm/v/topical.svg?color=6e4a7e" />
-  </a>
-  <a href="https://www.npmjs.com/package/@topical/core">
-    <img src="https://img.shields.io/npm/v/@topical/core.svg?color=3178c6" />
-  </a>
-  <a href="https://www.npmjs.com/package/@topical/react">
-    <img src="https://img.shields.io/npm/v/@topical/react.svg?color=087ea4" />
-  </a>
+  <a href="https://hex.pm/packages/topical"><img src="https://img.shields.io/hexpm/v/topical.svg?color=6e4a7e" /></a>
+  <a href="https://www.npmjs.com/package/@topical/core"><img src="https://img.shields.io/npm/v/@topical/core.svg?color=3178c6" /></a>
+  <a href="https://www.npmjs.com/package/@topical/react"><img src="https://img.shields.io/npm/v/@topical/react.svg?color=087ea4" /></a>
 </p>
 
 <br />
