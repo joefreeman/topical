@@ -23,3 +23,7 @@ ephemeral state - for example user presence, or cursor positions. They can be ba
 mechanisms like a file or file-based database. Or they can sit in front of an RDBMS (e.g., utilising
 Postgres notification channels), providing real-time cached views. Or they can be used to implement
 the event sourcing pattern.
+
+Another use case is for implementing an incremental cache: the state of the cache is setup in the topic
+initalisation and then kept up to date as necessary, without having to refresh from scratch. Clients
+accessing the cache will be able to read up-to-date state directly from memory.

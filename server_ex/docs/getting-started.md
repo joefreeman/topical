@@ -102,4 +102,4 @@ Topical.unsubscribe(MyApp.Topical, "lists/foo", ref)
 ```
 
 However, rather than using the API from Elixir, you may wish to set up the
-[Cowboy adapter](cowboy-adapter.md).
+[Cowboy adapter](cowboy-adapter.md), and then use the [JavaScript client](javascript-client.md).
