@@ -4,6 +4,22 @@
   <img src="logo.png" width="350" alt="Topical" />
 </p>
 
+<br />
+
+<p align="center">
+  <a href="https://hex.pm/packages/topical">
+    <img src="https://img.shields.io/hexpm/v/topical.svg?color=6e4a7e" />
+  </a>
+  <a href="https://www.npmjs.com/package/@topical/core">
+    <img src="https://img.shields.io/npm/v/@topical/core.svg?color=3178c6" />
+  </a>
+  <a href="https://www.npmjs.com/package/@topical/react">
+    <img src="https://img.shields.io/npm/v/@topical/react.svg?color=087ea4" />
+  </a>
+</p>
+
+<br />
+
 Topical is an Elixir library for synchronising server-maintained state (_topics_) to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
 
 The accompanying JavaScript library (and React hooks) allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
