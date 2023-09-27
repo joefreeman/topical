@@ -24,7 +24,9 @@ Topical is an Elixir library for synchronising server-maintained state (_topics_
 
 The accompanying JavaScript library (and React hooks) allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
 
-<p><img src="architecture.png" width="333" alt="Architecture diagram" /></p>
+<p align="center">
+  <img src="architecture.png" width="400" alt="Architecture diagram" />
+</p>
 
 See the [Getting started](https://hexdocs.pm/topical/getting-started.html) guide.
 
