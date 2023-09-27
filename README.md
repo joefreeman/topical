@@ -4,9 +4,11 @@
   <img src="logo.png" width="350" alt="Topical" />
 </p>
 
-Topical is an Elixir library for synchronising server-maintained state ('topics') to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
+Topical is an Elixir library for synchronising server-maintained state (_topics_) to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
 
 The accompanying JavaScript library (and React hooks) allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
+
+<p><img src="architecture.png" width="333" alt="Architecture diagram" /></p>
 
 See the [Getting started](https://hexdocs.pm/topical/getting-started.html) guide.
 
@@ -19,6 +21,10 @@ Alternatively state could be persisted - e.g., to a database - with the topic su
 ## Comparison to LiveView
 
 Topical solves a similar problem to Phoenix LiveView, but at a different abstraction level, by dealing only with the underlying state, rather than rendering HTML and handling UI events.
+
+## Adapters
+
+There are adapters for Cowboy, which allow adding Topical into an existing router. The WebSocket adapter is required to support the JavaScript client and the full functionality of Topical. The REST-like adapter provides a way for clients to capture a snapshot of a topic (which is useful for supporing the incremental cache use case).
 
 ## Example: todo list
 
