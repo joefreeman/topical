@@ -49,9 +49,8 @@ defmodule EventSourcing.AccountTopic do
   defp build_account(transactions, account_id) do
     latest_transactions =
       transactions
-      |> Enum.reverse()
-      |> Enum.take(@latest_transactions_limit)
-      |> Enum.reverse()
+      |> Enum.take(-@latest_transactions_limit)
+      |> Enum.map(&Map.from_struct/1)
 
     balance = Enum.reduce(transactions, 0, &update_balance(&2, &1, account_id))
     %{latest_transactions: latest_transactions, balance: balance}
