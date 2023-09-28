@@ -33,10 +33,23 @@ defmodule Topical.Adapters.Cowboy.RestHandler do
       {:ok, context} ->
         case Topical.capture(registry, topic, context) do
           {:ok, value} ->
-            json = Jason.encode!(value)
-            req = :cowboy_req.reply(200, %{"content-type" => "application/json"}, json, req)
-            {:ok, req, opts}
+            case Jason.encode(value) do
+              {:ok, json} ->
+                req = :cowboy_req.reply(200, %{"content-type" => "application/json"}, json, req)
+                {:ok, req, opts}
+
+              {:error, _error} ->
+                {:ok, error_response(req, "encode_failure"), opts}
+            end
+
+          {:error, :not_found} ->
+            {:ok, error_response(req, 404, "not_found"), opts}
         end
     end
+  end
+
+  defp error_response(req, status \\ 500, error) do
+    json = Jason.encode!(%{"error" => error})
+    :cowboy_req.reply(status, %{"content-type" => "application/json"}, json, req)
   end
 end
