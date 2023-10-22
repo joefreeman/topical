@@ -38,6 +38,7 @@ defmodule GameOfLife.GameTopic do
   def handle_notify("load", {pattern}, topic, _context) do
     alive =
       case pattern do
+        "empty" -> []
         "random" -> load_random(topic.value.width, topic.value.height, 0.4)
         "glider_gun" -> load_preset("glider_gun")
       end

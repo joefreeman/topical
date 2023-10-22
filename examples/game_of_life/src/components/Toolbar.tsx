@@ -44,6 +44,7 @@ export default function Toolbar({
         <option value="">Load...</option>
         <option value="random">Random</option>
         <option value="glider_gun">Glider gun</option>
+        <option value="empty">Reset</option>
       </select>{" "}
       {game.running ? (
         <button onClick={onStopClick}>Stop</button>
