@@ -3,6 +3,7 @@ defmodule GameOfLife.GameTopic do
 
   @interval_ms 100
   @neighbours for x <- -1..1, y <- -1..1, x != 0 or y != 0, do: {x, y}
+  @presets_dir "presets"
 
   def init(_params) do
     {:ok, Topic.new(%{width: 50, height: 50, alive: [], running: false})}
@@ -32,6 +33,16 @@ defmodule GameOfLife.GameTopic do
 
   def handle_notify("stop", {}, topic, _context) do
     {:ok, Topic.set(topic, [:running], false)}
+  end
+
+  def handle_notify("load", {pattern}, topic, _context) do
+    alive =
+      case pattern do
+        "random" -> load_random(topic.value.width, topic.value.height, 0.4)
+        "glider_gun" -> load_preset("glider_gun")
+      end
+
+    {:ok, reset(topic, alive)}
   end
 
   def handle_info(:tick, topic) do
@@ -82,6 +93,32 @@ defmodule GameOfLife.GameTopic do
     |> Enum.count(&MapSet.member?(alive, &1))
   end
 
+  defp load_random(width, height, density) do
+    0..(width - 1)
+    |> Enum.flat_map(fn x -> Enum.map(0..(height - 1), fn y -> {x, y} end) end)
+    |> Enum.filter(fn _ -> :rand.uniform() < density end)
+  end
+
+  defp load_preset(name) do
+    @presets_dir
+    |> Path.join(name)
+    |> File.read!()
+    |> String.split("\n")
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {line, y} ->
+      line
+      |> String.codepoints()
+      |> Enum.with_index()
+      |> Enum.map(fn {char, x} ->
+        case char do
+          "_" -> nil
+          "#" -> {x, y}
+        end
+      end)
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
   defp spawn(topic, cells) do
     Topic.insert(topic, [:alive], Enum.map(cells, fn {x, y} -> [x, y] end))
   end
@@ -91,5 +128,9 @@ defmodule GameOfLife.GameTopic do
       index = Enum.find_index(topic.value.alive, fn [x, y] -> {x, y} == cell end)
       Topic.delete(topic, [:alive], index)
     end)
+  end
+
+  defp reset(topic, alive) do
+    Topic.set(topic, [:alive], Enum.map(alive, fn {x, y} -> [x, y] end))
   end
 end

@@ -27,6 +27,10 @@ export default function Game({ gameId }: Props) {
   const start = useCallback(() => notify("start"), [notify]);
   const stop = useCallback(() => notify("stop"), [notify]);
   const step = useCallback(() => notify("step"), [notify]);
+  const load = useCallback(
+    (pattern: string) => notify("load", pattern),
+    [notify]
+  );
   const handleCellClick = useCallback(
     (x: number, y: number) => {
       if (isAlive(game, x, y)) {
@@ -47,6 +51,7 @@ export default function Game({ gameId }: Props) {
           onStopClick={stop}
           onStepClick={step}
           onZoomChange={setZoom}
+          onLoad={load}
         />
         <Grid game={game} zoom={zoom} onCellClick={handleCellClick} />
       </div>

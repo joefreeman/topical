@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { ChangeEvent, useCallback } from "react";
 
 import * as models from "../models";
 
@@ -9,6 +9,7 @@ type Props = {
   onStopClick: () => void;
   onStepClick: () => void;
   onZoomChange: (zoom: number) => void;
+  onLoad: (pattern: string) => void;
 };
 
 export default function Toolbar({
@@ -18,6 +19,7 @@ export default function Toolbar({
   onStopClick,
   onStepClick,
   onZoomChange,
+  onLoad,
 }: Props) {
   const handleZoomInClick = useCallback(
     () => onZoomChange(Math.min(20, zoom + 1)),
@@ -27,8 +29,22 @@ export default function Toolbar({
     () => onZoomChange(Math.max(1, zoom - 1)),
     [zoom, onZoomChange]
   );
+  const handleLoad = useCallback(
+    (ev: ChangeEvent<HTMLSelectElement>) => {
+      const value = ev.target.value;
+      if (value) {
+        onLoad(value);
+      }
+    },
+    [onLoad]
+  );
   return (
     <div>
+      <select onChange={handleLoad} value="">
+        <option value="">Load...</option>
+        <option value="random">Random</option>
+        <option value="glider_gun">Glider gun</option>
+      </select>{" "}
       {game.running ? (
         <button onClick={onStopClick}>Stop</button>
       ) : (
