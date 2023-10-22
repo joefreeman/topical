@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.9
+
+### Improvements
+
+- Empty updates (and inserts) are ignored, which avoids sending unnecessary messages to clients.
+
 ## 0.1.8
 
 ### Fixes
