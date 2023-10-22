@@ -117,6 +117,7 @@ See [`examples/todo`](examples/todo/) for a more complete example.
 
 - [`examples/todo`](examples/todo/) - A more complete todo example, with basic persistence.
 - [`examples/canvas`](examples/canvas/) - A simple canvas drawing example, with synchronised cursors.
+- [`examples/game_of_life`](examples/game_of_life/) - Conway's Game of Life.
 - [`examples/cache`](examples/cache/) - Using Topical as an incremental cache.
 
 ## Documentation

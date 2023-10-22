@@ -1,0 +1,23 @@
+body {
+  background: #fff;
+}
+
+.board {
+  border: 1px solid #ddd;
+}
+
+.board .cell {
+  stroke: #eee;
+}
+
+.board .cell.alive {
+  fill: #000;
+}
+
+.board .cell.dead {
+  fill: #fff;
+}
+
+.board .cell.dead:hover {
+  fill: #ddd;
+}

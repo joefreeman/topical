@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --outfile=priv/static/assets/bundle.js",
+    "watch": "esbuild src/main.ts --bundle --outfile=priv/static/assets/bundle.js --watch"
+  },
+  "dependencies": {
+    "@topical/react": "^0.1.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.31",
+    "@types/react-dom": "^18.2.14",
+    "esbuild": "^0.19.5"
+  }
+}
