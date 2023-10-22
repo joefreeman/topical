@@ -183,7 +183,12 @@ defmodule Topical.Topic do
   """
   def insert(topic, path, index \\ nil, value) do
     value = List.wrap(value)
-    update(topic, {:insert, path, index, value})
+
+    if Enum.any?(value) do
+      update(topic, {:insert, path, index, value})
+    else
+      topic
+    end
   end
 
   @doc """
