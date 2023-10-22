@@ -212,16 +212,17 @@ defmodule Topical.Topic.Server do
   end
 
   defp process(state, topic) do
-    value = Enum.reduce(topic.updates, state.topic.value, &Update.apply(&2, &1))
+    updates = Enum.reverse(topic.updates)
+    value = Enum.reduce(updates, state.topic.value, &Update.apply(&2, &1))
+
+    if value != topic.value do
+      raise "topic has unexpected value - expected: #{inspect(value)}; got: #{inspect(topic.value)}"
+    end
+
     # TODO: check that value and topic.value are equal?
-    notify_subscribers(state.subscribers, topic.updates)
+    notify_subscribers(state.subscribers, updates)
 
-    topic =
-      state.topic
-      |> Map.put(:state, topic.state)
-      |> Map.put(:value, value)
-
-    Map.put(state, :topic, topic)
+    Map.put(state, :topic, Topic.new(value, topic.state))
   end
 
   defp notify_subscribers(subscribers, updates) do
