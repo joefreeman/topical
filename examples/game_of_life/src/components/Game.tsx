@@ -2,21 +2,11 @@ import React, { useCallback, useState } from "react";
 import { useTopic } from "@topical/react";
 
 import * as models from "../models";
+import Grid from "./Grid";
+import Toolbar from "./Toolbar";
 
-function buildGrid(game: models.Game) {
-  const alive = game.alive.reduce(
-    (acc, [x, y]) => ({ ...acc, [`${x},${y}`]: true }),
-    {}
-  );
-  const grid: boolean[][] = [];
-  for (let y = 0; y < game.height; y++) {
-    const row: boolean[] = [];
-    for (let x = 0; x < game.width; x++) {
-      row.push(!!alive[`${x},${y}`]);
-    }
-    grid.push(row);
-  }
-  return grid;
+function isAlive(game: models.Game | undefined, x: number, y: number) {
+  return game?.alive.some((cell) => cell[0] == x && cell[1] == y);
 }
 
 type Props = {
@@ -34,40 +24,31 @@ export default function Game({ gameId }: Props) {
     (x: number, y: number) => notify("kill", x, y),
     [notify]
   );
-  const step = useCallback(() => notify("step"), [notify]);
   const start = useCallback(() => notify("start"), [notify]);
   const stop = useCallback(() => notify("stop"), [notify]);
+  const step = useCallback(() => notify("step"), [notify]);
+  const handleCellClick = useCallback(
+    (x: number, y: number) => {
+      if (isAlive(game, x, y)) {
+        kill(x, y);
+      } else {
+        spawn(x, y);
+      }
+    },
+    [game, kill, spawn]
+  );
   if (game) {
-    const grid = buildGrid(game);
     return (
       <div>
-        <div>
-          <button onClick={step}>Step</button>
-          <button onClick={() => (game.running ? stop() : start())}>
-            {game.running ? "Stop" : "Start"}
-          </button>{" "}
-          <button onClick={() => setZoom((z) => z + 1)}>+</button>
-          <button onClick={() => setZoom((z) => z - 1)}>-</button>
-        </div>
-        <svg
-          width={game.width * zoom}
-          height={game.height * zoom}
-          className="board"
-        >
-          {grid.map((row, y) =>
-            row.map((alive, x) => (
-              <rect
-                key={`${x},${y}`}
-                x={x * zoom}
-                y={y * zoom}
-                width={zoom}
-                height={zoom}
-                className={`cell ${alive ? "alive" : "dead"}`}
-                onClick={() => (alive ? kill(x, y) : spawn(x, y))}
-              />
-            ))
-          )}
-        </svg>
+        <Toolbar
+          game={game}
+          zoom={zoom}
+          onStartClick={start}
+          onStopClick={stop}
+          onStepClick={step}
+          onZoomChange={setZoom}
+        />
+        <Grid game={game} zoom={zoom} onCellClick={handleCellClick} />
       </div>
     );
   } else {
