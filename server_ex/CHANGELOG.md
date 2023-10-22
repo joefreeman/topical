@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.8
+
+### Fixes
+
+- Fixes the order of updates.
+
 ## 0.1.7
 
 ### Features
