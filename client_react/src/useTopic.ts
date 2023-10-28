@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback, useContext } from "react";
 
 import { Context } from "./provider";
 
+function arrayEqual(a: any[], b: any[]) {
+  return a.length == b.length && a.every((v, i) => v == b[i]);
+}
+
 export default function useTopic<T>(...topicParts: (string | undefined)[]): [
   T | undefined,
   {
@@ -10,8 +14,8 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
   }
 ] {
   const socket = useContext(Context);
-  const [value, setValue] = useState<T>();
-  const [error, setError] = useState<any>();
+  const [state, setState] =
+    useState<[(string | undefined)[], T | undefined, any]>();
   const notify = useCallback(
     (action: string, ...args: any[]) => {
       return socket!.notify(topicParts, action, ...args);
@@ -25,13 +29,21 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
     [socket, ...topicParts]
   );
   useEffect(() => {
-    setValue(undefined);
     if (!topicParts.some((p) => typeof p == "undefined")) {
-      return socket?.subscribe(topicParts, setValue, setError);
+      return socket?.subscribe<T>(
+        topicParts,
+        (v) => setState([topicParts, v, undefined]),
+        (e) => setState([topicParts, undefined, e])
+      );
     }
   }, [socket, ...topicParts]);
-  if (error) {
-    throw new Error(error);
+  if (state && arrayEqual(topicParts, state[0])) {
+    const [_, value, error] = state;
+    if (error) {
+      throw new Error(error);
+    }
+    return [value, { notify, execute }];
+  } else {
+    return [undefined, { notify, execute }];
   }
-  return [value, { notify, execute }];
 }
