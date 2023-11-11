@@ -36,7 +36,9 @@ Topical solves a similar problem to Phoenix LiveView, but at a different abstrac
 
 ## Adapters
 
-There are adapters for Cowboy, which allow adding Topical into an existing router. The WebSocket adapter is required to support the JavaScript client and the full functionality of Topical. The REST-like adapter provides a way for clients to capture a snapshot of a topic (which is useful for supporing the incremental cache use case).
+There are WebSocket adapters for [Cowboy](https://github.com/ninenines/cowboy) and [WebSock](https://github.com/phoenixframework/websock) (compatible with [Plug](https://github.com/elixir-plug/plug) and [Bandit](https://github.com/mtrudel/bandit)), which allow adding Topical into an existing application. Either of these are required to support the JavaScript client and the full functionality of Topical. See [`examples/todo`](examples/todo/) for an example of both (running simultaneously).
+
+Additionally, a REST-like adapter provides a way for clients to capture a snapshot of a topic (which is useful for supporing the incremental cache use case).
 
 ## Example: todo list
 
@@ -128,7 +130,7 @@ Documentation is available on [HexDocs](https://hexdocs.pm/topical/).
 
 This repository is separated into:
 
-- [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including adapters for the Cowboy web server.
+- [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including adapters.
 - [`client_js`](client_js/) - the vanilla JavaScript WebSocket client.
 - [`client_react`](client_react/) - React hooks built on top of the JavaScript client.
 
