@@ -39,6 +39,7 @@ defmodule Todo.ListTopic do
   def terminate(_reason, topic) do
     path = get_path(topic.state.list_id)
     content = :erlang.term_to_binary(topic.value)
+    path |> Path.dirname() |> File.mkdir_p!()
     File.write!(path, content)
   end
 

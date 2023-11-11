@@ -20,6 +20,7 @@ defmodule Todo.ListsTopic do
     id = Integer.to_string(:erlang.system_time())
     topic = Topic.insert(topic, [], length(topic.value), %{id: id, name: name})
     content = :erlang.term_to_binary(topic.value)
+    @path |> Path.dirname() |> File.mkdir_p!()
     File.write!(@path, content)
     {:ok, id, topic}
   end
