@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { SocketProvider } from "@topical/react";
 
 import useClientId from "../hooks/useClientId";

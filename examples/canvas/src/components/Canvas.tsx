@@ -1,10 +1,10 @@
+import React from "react";
 import { useCallback, MouseEvent, useEffect, Fragment } from "react";
 import { useTopic } from "@topical/react";
 
 import * as models from "../models";
 import Cursor from "./Cursor";
 import Path from "./Path";
-import React from "react";
 
 type Props = {
   canvasId: string;
