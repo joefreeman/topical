@@ -1,4 +1,6 @@
 defmodule Topical.Adapters.Base.WebSocket do
+  @moduledoc false
+
   alias Topical.Protocol.{Request, Response}
 
   def init(opts, init_arg \\ nil) do
