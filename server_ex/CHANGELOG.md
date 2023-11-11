@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.10
+
+### Features
+
+- Adds a WebSock/Plug adapter.
+
 ## 0.1.9
 
 ### Improvements
