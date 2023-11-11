@@ -21,6 +21,9 @@ defmodule Todo.MixProject do
   defp deps do
     [
       {:cowboy, "~> 2.9"},
+      {:plug, "~> 1.15"},
+      {:bandit, "~> 1.1"},
+      {:websock_adapter, "~> 0.5"},
       {:topical, path: "../../server_ex"}
     ]
   end

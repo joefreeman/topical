@@ -1,4 +1,4 @@
-defmodule Todo.Web do
+defmodule Todo.CowboyServer do
   @otp_app Mix.Project.config()[:app]
 
   alias Topical.Adapters.Cowboy.WebsocketHandler
