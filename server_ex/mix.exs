@@ -48,7 +48,7 @@ defmodule Topical.MixProject do
       extras: [
         "docs/introduction.md",
         "docs/getting-started.md",
-        "docs/cowboy-adapter.md",
+        "docs/websocket-adapter.md",
         "docs/javascript-client.md"
       ]
     ]
