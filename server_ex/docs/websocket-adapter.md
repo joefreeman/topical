@@ -37,7 +37,8 @@ defmodule Router do
     |> WebSockAdapter.upgrade(
       Topical.Adapters.Plug.WebSockServer,
       [registry: Todo.Registry],
-      timeout: 60_000)
+      timeout: 60_000
+    )
     |> halt()
   end
 
