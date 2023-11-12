@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.6
+
+## Improvements
+
+- Update core dependency (to pass topics as lists).
+
 ## 0.1.5
 
 ### Fixes
