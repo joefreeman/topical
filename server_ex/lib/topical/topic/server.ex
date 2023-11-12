@@ -103,7 +103,7 @@ defmodule Topical.Topic.Server do
   def handle_continue({:init, init_arg}, state) do
     case state.module.init(init_arg) do
       {:ok, %Topic{} = topic} ->
-        state = Map.put(state, :topic, topic)
+        state = reset_topic(state, topic)
         {:noreply, state, timeout(state)}
 
       other ->
@@ -223,6 +223,10 @@ defmodule Topical.Topic.Server do
       notify_subscribers(state.subscribers, updates)
     end
 
+    reset_topic(state, topic)
+  end
+
+  defp reset_topic(state, topic) do
     Map.put(state, :topic, Topic.new(topic.value, topic.state))
   end
 
