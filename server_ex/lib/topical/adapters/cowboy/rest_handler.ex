@@ -24,8 +24,7 @@ defmodule Topical.Adapters.Cowboy.RestHandler do
   def init(req, opts) do
     registry = Keyword.fetch!(opts, :registry)
     init = Keyword.get(opts, :init)
-    path_info = :cowboy_req.path_info(req)
-    topic = Enum.join(path_info, "/")
+    topic = :cowboy_req.path_info(req)
 
     result = if init, do: init.(req), else: {:ok, nil}
 

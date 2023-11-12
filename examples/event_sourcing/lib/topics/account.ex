@@ -1,5 +1,5 @@
 defmodule EventSourcing.AccountTopic do
-  use Topical.Topic, route: "accounts/:account_id"
+  use Topical.Topic, route: ["accounts", :account_id]
 
   alias EventSourcing.Ledger
 

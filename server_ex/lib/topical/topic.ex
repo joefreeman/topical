@@ -10,7 +10,7 @@ defmodule Topical.Topic do
   This module also contains a macro - `use`-ing it sets up a topic server:
 
       defmodule MyApp.Topics.List do
-        use Topical.Topic, route: "lists/:list_id"
+        use Topical.Topic, route: ["lists", :list_id]
 
         # Initialise the topic
         def init(params) do

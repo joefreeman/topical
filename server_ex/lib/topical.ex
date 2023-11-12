@@ -39,7 +39,7 @@ defmodule Topical do
 
   ## Example
 
-      Topical.subscribe(MyApp.Topical, "lists/foo", self())
+      Topical.subscribe(MyApp.Topical, ["lists", "foo"], self())
       #=> {:ok, #Reference<0.4021726225.4145020932.239110>}
 
   """
@@ -55,7 +55,7 @@ defmodule Topical do
 
   ## Example
 
-      Topical.unsubscribe(MyApp.Topical, "lists/foo", ref)
+      Topical.unsubscribe(MyApp.Topical, ["lists", "foo"], ref)
 
   """
   def unsubscribe(registry, topic, ref) do
@@ -70,7 +70,7 @@ defmodule Topical do
 
   ## Example
 
-      Topical.capture(MyApp.Topical, "lists/foo")
+      Topical.capture(MyApp.Topical, ["lists", "foo"])
       # => {:ok, %{items: %{}, order: []}}
   """
   def capture(registry, topic, context \\ nil) do
@@ -84,7 +84,7 @@ defmodule Topical do
 
   ## Example
 
-      Topical.execute(MyApp.Topical, "lists/foo", "add_item", {"Test", false})
+      Topical.execute(MyApp.Topical, ["lists", "foo"], "add_item", {"Test", false})
       #=> {:ok, "item123"}
 
   """
@@ -101,7 +101,7 @@ defmodule Topical do
 
   ## Example
 
-      Topical.notify(MyApp.Topical, "lists/foo", "update_done", {"item123", true})
+      Topical.notify(MyApp.Topical, ["lists", "foo"], "update_done", {"item123", true})
       #=> :ok
 
   """

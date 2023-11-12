@@ -46,7 +46,7 @@ A partial implementation of a todo list topic might look like this:
 
 ```elixir
 defmodule MyApp.Topics.List do
-  use Topical.Topic, route: "lists/:list_id"
+  use Topical.Topic, route: ["lists", :list_id]
 
   # Initialise the topic
   def init(params) do

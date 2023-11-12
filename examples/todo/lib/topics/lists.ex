@@ -1,5 +1,5 @@
 defmodule Todo.ListsTopic do
-  use Topical.Topic, route: "lists"
+  use Topical.Topic, route: ["lists"]
 
   @path "data/index"
 

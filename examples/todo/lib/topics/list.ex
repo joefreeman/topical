@@ -1,5 +1,5 @@
 defmodule Todo.ListTopic do
-  use Topical.Topic, route: "lists/:list_id"
+  use Topical.Topic, route: ["lists", :list_id]
 
   def init(params) do
     list_id = Keyword.fetch!(params, :list_id)

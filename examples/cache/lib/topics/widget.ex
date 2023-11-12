@@ -1,5 +1,5 @@
 defmodule Cache.WidgetTopic do
-  use Topical.Topic, route: "widgets/:widget_id"
+  use Topical.Topic, route: ["widgets", :widget_id]
 
   def init(_params) do
     widget = load_widget()

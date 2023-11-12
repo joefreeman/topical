@@ -1,5 +1,5 @@
 defmodule GameOfLife.GameTopic do
-  use Topical.Topic, route: "games/:game_id"
+  use Topical.Topic, route: ["games", :game_id]
 
   @interval_ms 100
   @neighbours for x <- -1..1, y <- -1..1, x != 0 or y != 0, do: {x, y}

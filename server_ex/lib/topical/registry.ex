@@ -20,12 +20,16 @@ defmodule Topical.Registry do
   defp build_routes(modules) do
     Enum.map(modules, fn module ->
       route =
-        module.route
-        |> String.split("/")
-        |> Enum.map(fn
-          ":" <> atom -> String.to_atom(atom)
-          part -> URI.decode(part)
-        end)
+        if is_binary(module.route) do
+          module.route
+          |> String.split("/")
+          |> Enum.map(fn
+            ":" <> atom -> String.to_atom(atom)
+            part -> URI.decode(part)
+          end)
+        else
+          module.route
+        end
 
       {route, module}
     end)
@@ -33,9 +37,13 @@ defmodule Topical.Registry do
 
   defp resolve_route(route, routes) do
     parts =
-      route
-      |> String.split("/")
-      |> Enum.map(&URI.decode/1)
+      if is_binary(route) do
+        route
+        |> String.split("/")
+        |> Enum.map(&URI.decode/1)
+      else
+        route
+      end
 
     Enum.find_value(routes, fn {route, module} ->
       match = match_route(parts, route)

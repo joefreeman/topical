@@ -6,7 +6,7 @@ items, and handle Erlang messages from a separate process indicating when items 
 
 ```elixir
 defmodule MyApp.Topics.List do
-  use Topical.Topic, route: "lists/:list_id"
+  use Topical.Topic, route: ["lists", :list_id]
 
   # Initialise the topic
   def init(params) do

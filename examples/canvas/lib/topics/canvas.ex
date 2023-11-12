@@ -1,5 +1,5 @@
 defmodule Canvas.Topics.CanvasTopic do
-  use Topical.Topic, route: "canvases/:canvas_id"
+  use Topical.Topic, route: ["canvases", :canvas_id]
 
   @colors [
     "#147EB3",
