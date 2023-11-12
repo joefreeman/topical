@@ -88,7 +88,7 @@ end
 And a corresponding React component:
 
 ```typescript
-import { SocketProvider, useTopic } from "topical";
+import { SocketProvider, useTopic } from "@topical/react";
 
 function TodoList({ id }) {
   const [list, { execute }] = useTopic("lists", id);
