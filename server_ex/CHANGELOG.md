@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.11
+
+### Improvements
+
+- Topic routes are specified as a list (e.g., `["lists", :list_id]`), rather than a string (`"lists/:list_id"`).
+
 ## 0.1.10
 
 ### Features
