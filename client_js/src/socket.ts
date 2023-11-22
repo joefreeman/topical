@@ -19,10 +19,6 @@ type Request = {
   onError: (reason?: any) => void;
 };
 
-function notify(listeners: ((...args: any[]) => void)[], ...args: any[]) {
-  listeners.forEach((listener) => listener(...args));
-}
-
 function validateTopic(parts: (string | undefined)[]) {
   if (parts.some((p) => typeof p == "undefined")) {
     throw new Error("topic component is undefined");
@@ -32,6 +28,7 @@ function validateTopic(parts: (string | undefined)[]) {
 export default class Socket {
   private socket: WebSocket;
   private closed = false;
+  private state: SocketState = "disconnected";
   private lastChannelId = 0;
   private topics: Record<string, Topic<any>> = {};
   private requests: Record<number, Request> = {};
@@ -44,7 +41,7 @@ export default class Socket {
 
   private open() {
     this.closed = false;
-    notify(this.listeners, "connecting");
+    this.setState("connecting");
     const socket = new WebSocket(this.url);
     socket.addEventListener("open", this.handleSocketOpen);
     socket.addEventListener("error", this.handleSocketError);
@@ -53,8 +50,12 @@ export default class Socket {
     return socket;
   }
 
+  getState() {
+    return this.state;
+  }
+
   isConnected() {
-    return this.socket.readyState == WebSocket.OPEN;
+    return this.state == "connected";
   }
 
   addListener(listener: (state: SocketState) => void) {
@@ -124,6 +125,11 @@ export default class Socket {
     };
   }
 
+  private setState(state: SocketState) {
+    this.state = state;
+    this.listeners.forEach((listener) => listener(state));
+  }
+
   private setupSubscription(key: string) {
     const channelId = ++this.lastChannelId;
     const topic = this.topics[key].topic;
@@ -133,7 +139,7 @@ export default class Socket {
   }
 
   private handleSocketOpen = () => {
-    notify(this.listeners, "connected");
+    this.setState("connected");
     Object.keys(this.topics).forEach((key) => {
       if (!this.topics[key].channelId) {
         this.setupSubscription(key);
@@ -197,7 +203,7 @@ export default class Socket {
   }
 
   private handleSocketClose = () => {
-    notify(this.listeners, "disconnected");
+    this.setState("disconnected");
     this.socket.removeEventListener("open", this.handleSocketOpen);
     this.socket.removeEventListener("error", this.handleSocketError);
     this.socket.removeEventListener("message", this.handleSocketMessage);
