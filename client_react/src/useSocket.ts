@@ -10,10 +10,13 @@ export default function useSocket(): [
   const socket = useContext(Context);
   const [state, setState] = useState<SocketState>();
   useEffect(() => {
-    socket?.addListener(setState);
-    return () => {
-      socket?.removeListener(setState);
-    };
+    if (socket) {
+      setState(socket.getState());
+      socket.addListener(setState);
+      return () => {
+        socket.removeListener(setState);
+      };
+    }
   }, [socket]);
 
   return [socket, state];
