@@ -4,7 +4,7 @@ defmodule Topical.MixProject do
   def project do
     [
       app: :topical,
-      version: "0.1.11",
+      version: "0.1.12",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

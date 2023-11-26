@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.12
+
+### Improvements
+
+- If, after applying topic updates, the value of a topic hasn't changed, the updates will be discarded.
+
 ## 0.1.11
 
 ### Improvements
