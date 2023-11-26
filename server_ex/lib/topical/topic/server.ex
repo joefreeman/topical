@@ -220,7 +220,9 @@ defmodule Topical.Topic.Server do
         raise "topic has unexpected value - expected: #{inspect(value)}; got: #{inspect(topic.value)}"
       end
 
-      notify_subscribers(state.subscribers, updates)
+      if value != state.topic.value do
+        notify_subscribers(state.subscribers, updates)
+      end
     end
 
     reset_topic(state, topic)
