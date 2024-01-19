@@ -26,7 +26,7 @@ function updateIn(value: any, path: Path, callback: (value: any) => any): any {
     } else {
       return {
         ...value,
-        [key]: updateIn(value[key], rest, callback),
+        [key]: updateIn(value?.[key], rest, callback),
       };
     }
   }

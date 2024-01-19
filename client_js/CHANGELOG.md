@@ -1,7 +1,19 @@
 # CHANGELOG
 
+## 0.1.4
+
+### Fixes
+
+- Handles applying nested update to undefined topic state.
+
+## 0.1.3
+
+### Improvements
+
+- Supports querying the state of the socket.
+
 ## 0.1.2
 
 ### Improvements
 
-- Pass topics as lists (requires server version 0.1.11+).
+- Passes topics as lists (requires server version 0.1.11+).
