@@ -97,7 +97,7 @@ export default class Socket {
   subscribe<T>(
     topic: (string | undefined)[],
     onUpdate: (value: T) => void,
-    onError?: (error: any) => void
+    onError?: (error: any) => void,
   ) {
     const listener = { onUpdate, onError };
     validateTopic(topic);
@@ -174,7 +174,7 @@ export default class Socket {
     if (channelId in this.subscriptions) {
       const key = this.subscriptions[channelId];
       this.topics[key].listeners.forEach(
-        ({ onError }) => onError && onError(error)
+        ({ onError }) => onError && onError(error),
       );
       delete this.topics[key];
       delete this.subscriptions[channelId];
@@ -191,15 +191,19 @@ export default class Socket {
 
   private handleTopicReset(channelId: number, value: any) {
     const key = this.subscriptions[channelId];
-    this.topics[key].value = value;
-    this.topics[key].listeners.forEach((l) => l.onUpdate(value));
+    if (key) {
+      this.topics[key].value = value;
+      this.topics[key].listeners.forEach((l) => l.onUpdate(value));
+    }
   }
 
   private handleTopicUpdates(subscriptionId: number, updates: Update[]) {
     const key = this.subscriptions[subscriptionId];
-    const value = updates.reduce(applyUpdate, this.topics[key].value);
-    this.topics[key].value = value;
-    this.topics[key].listeners.forEach((l) => l.onUpdate(value));
+    if (key) {
+      const value = updates.reduce(applyUpdate, this.topics[key].value);
+      this.topics[key].value = value;
+      this.topics[key].listeners.forEach((l) => l.onUpdate(value));
+    }
   }
 
   private handleSocketClose = () => {

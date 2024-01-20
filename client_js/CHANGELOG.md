@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.1.5
+
+### Fixes
+
+- Ignores messages for a subscription that has been unsubscribed.
+
 ## 0.1.4
 
 ### Fixes
