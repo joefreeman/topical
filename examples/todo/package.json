@@ -4,7 +4,7 @@
     "watch": "esbuild src/main.ts --bundle --outfile=priv/static/assets/bundle.js --watch"
   },
   "dependencies": {
-    "@topical/react": "^0.1.0",
+    "@topical/react": "^0.1.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

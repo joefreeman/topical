@@ -29,7 +29,7 @@ defmodule Todo.ListTopic do
   end
 
   def handle_notify("update_text", {id, text}, topic, _context) do
-    {:ok, Topic.set(topic, [:items, id, :text], text)}
+    {:ok, Topic.merge(topic, [:items, id], %{text: text})}
   end
 
   def handle_notify("update_done", {id, done}, topic, _context) do

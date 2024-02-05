@@ -8,23 +8,31 @@ type ItemProps = {
   item: models.Item;
   itemId: string;
   onDoneChange: (id: string, done: boolean) => void;
+  onTextUpdate: (id: string, text: string) => void;
 };
 
-function Item({ item, itemId, onDoneChange }: ItemProps) {
+function Item({ item, itemId, onDoneChange, onTextUpdate }: ItemProps) {
+  const { text, done } = item;
   const handleDoneChange = useCallback(
     (ev: ChangeEvent<HTMLInputElement>) => {
       onDoneChange(itemId, ev.target.checked);
     },
-    [itemId, onDoneChange]
+    [itemId, onDoneChange],
   );
+  const handleDoubleClick = useCallback(() => {
+    const newText = prompt("Update item:", item.text);
+    if (newText && newText != text) {
+      onTextUpdate(itemId, newText);
+    }
+  }, [text, onTextUpdate]);
   return (
     <div className="item">
       <input
         type="checkbox"
-        checked={item.done || false}
+        checked={done || false}
         onChange={handleDoneChange}
       />
-      {item.text}
+      <span onDoubleClick={handleDoubleClick}>{text}</span>
     </div>
   );
 }
@@ -32,14 +40,20 @@ function Item({ item, itemId, onDoneChange }: ItemProps) {
 type ItemsProps = {
   list: models.List;
   onDoneChange: (id: string, done: boolean) => void;
+  onTextUpdate: (id: string, text: string) => void;
 };
 
-function Items({ list, onDoneChange }: ItemsProps) {
+function Items({ list, onDoneChange, onTextUpdate }: ItemsProps) {
   return (
     <ol>
       {list.order.map((id: string) => (
         <li key={id}>
-          <Item item={list.items[id]} itemId={id} onDoneChange={onDoneChange} />
+          <Item
+            item={list.items[id]}
+            itemId={id}
+            onDoneChange={onDoneChange}
+            onTextUpdate={onTextUpdate}
+          />
         </li>
       ))}
     </ol>
@@ -54,7 +68,7 @@ function Form({ onSubmit }: FormProps) {
   const [text, setText] = useState("");
   const handleChange = useCallback(
     (ev: ChangeEvent<HTMLInputElement>) => setText(ev.target.value),
-    []
+    [],
   );
   const handleSubmit = useCallback(
     (ev: FormEvent<HTMLFormElement>) => {
@@ -63,7 +77,7 @@ function Form({ onSubmit }: FormProps) {
         setText("");
       });
     },
-    [text]
+    [text],
   );
   return (
     <form onSubmit={handleSubmit}>
@@ -83,22 +97,29 @@ type ListProps = {
 };
 
 function List({ id, name }: ListProps) {
-  const topic = `lists/${id}`;
-  const [list, { execute, notify }] = useTopic<models.List>(topic);
+  const [list, { execute, notify }] = useTopic<models.List>("lists", id);
   const handleSubmit = useCallback(
     (text: string) => execute("add_item", text),
-    [execute]
+    [execute],
   );
   const handleDoneChange = useCallback(
     (id: string, done: boolean) => notify("update_done", id, done),
-    [notify]
+    [notify],
+  );
+  const handleTextUpdate = useCallback(
+    (id: string, text: string) => notify("update_text", id, text),
+    [notify],
   );
   return (
     <div className="list">
       <h1>{name}</h1>
       {list ? (
         <Fragment>
-          <Items list={list} onDoneChange={handleDoneChange} />
+          <Items
+            list={list}
+            onDoneChange={handleDoneChange}
+            onTextUpdate={handleTextUpdate}
+          />
           <Form onSubmit={handleSubmit} />
         </Fragment>
       ) : (
