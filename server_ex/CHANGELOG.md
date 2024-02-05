@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.2.0
+
+### Improvements
+
+- Added support for merge operation.
+
 ## 0.1.12
 
 ### Improvements
