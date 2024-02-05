@@ -4,7 +4,8 @@ export type Update =
   | [0, Path, any]
   | [1, Path, string]
   | [2, Path, number | null, any[]]
-  | [3, Path, number, number];
+  | [3, Path, number, number]
+  | [4, Path, Record<string, any>];
 
 function updateIn(value: any, path: Path, callback: (value: any) => any): any {
   if (path.length == 0) {
@@ -63,6 +64,10 @@ export function applyUpdate<T>(current: T, update: Update): T {
         ...list.slice(0, index),
         ...list.slice(index + count),
       ]);
+    }
+    case 4: {
+      const [value] = rest;
+      return updateIn(current, path, (existing) => ({ ...existing, ...value }));
     }
     default:
       throw new Error("unhandled update type");

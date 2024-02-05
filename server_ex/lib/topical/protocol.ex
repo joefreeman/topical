@@ -52,6 +52,7 @@ defmodule Topical.Protocol do
         {:unset, path, key} -> [1, path, key]
         {:insert, path, index, values} -> [2, path, index, values]
         {:delete, path, index, count} -> [3, path, index, count]
+        {:merge, path, value} -> [4, path, value]
       end
     end
   end

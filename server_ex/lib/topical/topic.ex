@@ -203,4 +203,17 @@ defmodule Topical.Topic do
   def delete(topic, path, index, count \\ 1) do
     update(topic, {:delete, path, index, count})
   end
+
+  @doc """
+  Updates the opic by merging `value` into `path`.
+
+      %{foo: %{bar: %{a: 1, b: 2}}}
+      |> Topic.new()
+      |> Topic.merge([:foo, :bar], %{b: 3, c: 4})
+      |> Map.fetch!(:value)
+      #=> %{foo: %{bar: %{a: 1, b: 3, c: 4}}}
+  """
+  def merge(topic, path, value) do
+    update(topic, {:merge, path, value})
+  end
 end

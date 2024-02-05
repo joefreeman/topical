@@ -16,6 +16,9 @@ defmodule Topical.Topic.Update do
 
       {:delete, path, index, count} ->
         update_in(value, path, &delete_at(&1, index, count))
+
+      {:merge, path, new} ->
+        update_in(value, path, &Map.merge(&1, new))
     end
   end
 
