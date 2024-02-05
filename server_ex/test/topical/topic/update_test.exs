@@ -46,4 +46,9 @@ defmodule Topical.Topic.UpdateTest do
   test "delete from list" do
     assert Update.apply(%{foo: [0, 1, 2, 3]}, {:delete, [:foo], 1, 2}) == %{foo: [0, 3]}
   end
+
+  test "merge value" do
+    assert Update.apply(%{foo: %{bar: %{a: 1, b: 2}}}, {:merge, [:foo, :bar], %{b: 3, c: 4}}) ==
+             %{foo: %{bar: %{a: 1, b: 3, c: 4}}}
+  end
 end
