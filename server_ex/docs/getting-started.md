@@ -85,6 +85,7 @@ is the subscription reference returned from `subscribe`), and then subsequent
 - `{:unset, path, key}`: the `key` has been unset from the object at the `path`.
 - `{:insert, path, index, values}`: the `values` have been inserted into the array at the `path`.
 - `{:delete, path, index, count}`: `count` values have been deleted from the array at the `path`, from the position `index`.
+- `{:merge, path, value}`: the `value` has been (shallow) merged at the `path`.
 
 (You can receive any waiting messages on an IEx shell with:
 `receive do x -> x after 0 -> nil end`.)
