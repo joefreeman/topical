@@ -1,10 +1,16 @@
 # CHANGELOG
 
+## 0.2.1
+
+### Fixes
+
+- Handles merging into an undefined value.
+
 ## 0.2.0
 
-### Improvements
+### Features
 
-- Added support for merge operation.
+- Adds support for merge operation.
 
 ## 0.1.12
 

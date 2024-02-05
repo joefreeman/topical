@@ -51,4 +51,8 @@ defmodule Topical.Topic.UpdateTest do
     assert Update.apply(%{foo: %{bar: %{a: 1, b: 2}}}, {:merge, [:foo, :bar], %{b: 3, c: 4}}) ==
              %{foo: %{bar: %{a: 1, b: 3, c: 4}}}
   end
+
+  test "merge non-existing value" do
+    assert Update.apply(%{foo: %{}}, {:merge, [:foo, :bar], %{a: 1}}) == %{foo: %{bar: %{a: 1}}}
+  end
 end
