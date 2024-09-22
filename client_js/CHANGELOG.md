@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.2.1
+
+### Fixes
+
+- Doesn't try to unsubscribe after a subscription error.
+
 ## 0.2.0
 
 ### Improvements
