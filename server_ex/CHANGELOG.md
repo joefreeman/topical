@@ -1,5 +1,12 @@
 # CHANGELOG
 
+
+## 0.2.2
+
+### Improvements
+
+- Handles and returns init errors.
+
 ## 0.2.1
 
 ### Fixes
