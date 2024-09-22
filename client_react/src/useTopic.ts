@@ -11,7 +11,7 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
   {
     notify: (action: string, ...args: any[]) => void;
     execute: (action: string, ...args: any[]) => Promise<any>;
-  }
+  },
 ] {
   const socket = useContext(Context);
   const [state, setState] =
@@ -20,20 +20,20 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
     (action: string, ...args: any[]) => {
       return socket!.notify(topicParts, action, ...args);
     },
-    [socket, ...topicParts]
+    [socket, ...topicParts],
   );
   const execute = useCallback(
     (action: string, ...args: any[]) => {
       return socket!.execute(topicParts, action, ...args);
     },
-    [socket, ...topicParts]
+    [socket, ...topicParts],
   );
   useEffect(() => {
     if (!topicParts.some((p) => typeof p == "undefined")) {
       return socket?.subscribe<T>(
         topicParts,
         (v) => setState([topicParts, v, undefined]),
-        (e) => setState([topicParts, undefined, e])
+        (e) => setState([topicParts, undefined, e]),
       );
     }
   }, [socket, ...topicParts]);
