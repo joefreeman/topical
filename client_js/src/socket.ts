@@ -104,7 +104,9 @@ export default class Socket {
     const key = topic.join("/");
     if (key in this.topics) {
       this.topics[key].listeners.push(listener);
-      listener.onUpdate(this.topics[key].value);
+      if ("value" in this.topics[key]) {
+        listener.onUpdate(this.topics[key].value);
+      }
     } else {
       this.topics[key] = { listeners: [listener], topic: topic as string[] };
       if (this.isConnected()) {
