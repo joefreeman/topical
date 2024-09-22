@@ -12,7 +12,7 @@ defmodule Topical.Topic.Server do
 
   `params` are the values associated with the placeholders in the route.
   """
-  @callback init(params :: [...]) :: {:ok, %Topic{}}
+  @callback init(params :: [...]) :: {:ok, %Topic{}} | {:error, reason :: any}
 
   @doc """
   Invoked before a client subscribes (but after initialisation).
@@ -22,21 +22,21 @@ defmodule Topical.Topic.Server do
 
   This callback is optional.
   """
-  @callback handle_subscribe(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
+  @callback handle_subscribe(topic :: %Topic{}, context :: any) :: {:ok, %Topic{}}
 
   @doc """
   Invoked after a client unsubscribes (either explicitly or because the process dies).
 
   This callback is optional.
   """
-  @callback handle_unsubscribe(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
+  @callback handle_unsubscribe(topic :: %Topic{}, context :: any) :: {:ok, %Topic{}}
 
   @doc """
   Invoked before state is captured (after initialisation).
 
   This callback is optional.
   """
-  @callback handle_capture(topic :: %Topic{}, context :: any()) :: {:ok, %Topic{}}
+  @callback handle_capture(topic :: %Topic{}, context :: any) :: {:ok, %Topic{}}
 
   @doc """
   Invoked when a client has executed an action.
@@ -44,7 +44,7 @@ defmodule Topical.Topic.Server do
   This callback is optional. If one is not implemented, the topic will fail if an action is
   executed.
   """
-  @callback handle_execute(action :: term(), args :: tuple(), topic :: %Topic{}, context :: any()) ::
+  @callback handle_execute(action :: term(), args :: tuple(), topic :: %Topic{}, context :: any) ::
               {:ok, term(), %Topic{}}
 
   @doc """
@@ -53,7 +53,7 @@ defmodule Topical.Topic.Server do
   This callback is optional. If one is not implemented, the topic will fail if a notification is
   received.
   """
-  @callback handle_notify(action :: term(), args :: tuple(), topic :: %Topic{}, context :: any()) ::
+  @callback handle_notify(action :: term(), args :: tuple(), topic :: %Topic{}, context :: any) ::
               {:ok, %Topic{}}
 
   @doc """
@@ -90,24 +90,23 @@ defmodule Topical.Topic.Server do
 
   @impl true
   def init({module, init_arg}) do
-    {:ok,
-     %{
-       module: module,
-       topic: nil,
-       subscribers: %{},
-       timeout: 10_000
-     }, {:continue, {:init, init_arg}}}
-  end
+    state = %{
+      module: module,
+      topic: nil,
+      subscribers: %{},
+      timeout: 10_000
+    }
 
-  @impl true
-  def handle_continue({:init, init_arg}, state) do
     case state.module.init(init_arg) do
       {:ok, %Topic{} = topic} ->
         state = reset_topic(state, topic)
-        {:noreply, state, timeout(state)}
+        {:ok, state, timeout(state)}
+
+      {:error, error} ->
+        {:stop, error}
 
       other ->
-        raise "init/1 returned unexpected result - expected `{:ok, topic}`; got: #{inspect(other)}"
+        raise "init/1 returned unexpected result - expected `{:ok, topic}` or `{:error, reason}`; got: #{inspect(other)}"
     end
   end
 

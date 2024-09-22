@@ -1,10 +1,16 @@
 # CHANGELOG
 
+## 0.3.0
+
+### Improvements
+
+- `useTopic` now returns stale value, along with an `error` and `loading` properties.
+
 ## 0.2.0
 
 ### Improvements
 
-- Updaated core dependency to add support for merge operations.
+- Updated core dependency to add support for merge operations.
 
 ## 0.1.9
 

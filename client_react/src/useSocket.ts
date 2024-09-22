@@ -5,7 +5,7 @@ import { Context } from "./provider";
 
 export default function useSocket(): [
   Socket | undefined,
-  SocketState | undefined
+  SocketState | undefined,
 ] {
   const socket = useContext(Context);
   const [state, setState] = useState<SocketState>();

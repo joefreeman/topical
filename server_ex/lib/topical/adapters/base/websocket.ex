@@ -91,8 +91,8 @@ defmodule Topical.Adapters.Base.WebSocket do
 
         {:ok, [], state}
 
-      {:error, :not_found} ->
-        {:ok, [Response.encode_error(channel_id, "not_found")], state}
+      {:error, error} ->
+        {:ok, [Response.encode_error(channel_id, error)], state}
     end
   end
 
