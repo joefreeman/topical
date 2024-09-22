@@ -1,5 +1,12 @@
 # CHANGELOG
 
+
+## 0.2.2
+
+### Fixes
+
+- Only notify initial topic update if loaded.
+
 ## 0.2.1
 
 ### Fixes
