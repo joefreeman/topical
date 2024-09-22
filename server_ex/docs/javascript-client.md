@@ -72,17 +72,19 @@ Then use the `useTopic` hook in your components to subscribe to your topic:
 import { useTopic } from "@topical/react";
 
 function List({ id }) {
-  const [list, { execute, notify }] = useTopic<models.List>("lists", id);
+  const [list, { execute, notify, loading, error }] = useTopic<models.List>("lists", id);
   const addItem = useCallback(
     (text: string) => execute("add_item", text),
     [execute]
   );
-  if (list) {
+  if (loading) {
+    return <p>Loading...</p>;
+  } else if (error) {
+    return <p>Error.</p>
+  } else {
     return (
       // ...
     );
-  } else {
-    return <p>Loading...</p>
   }
 }
 ```

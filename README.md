@@ -91,15 +91,19 @@ And a corresponding React component:
 import { SocketProvider, useTopic } from "@topical/react";
 
 function TodoList({ id }) {
-  const [list, { execute }] = useTopic("lists", id);
+  const [list, { execute, loading, error }] = useTopic("lists", id);
   const handleAddClick = useCallback(
     () => execute("add_item", prompt()),
     [execute]
   );
-  if (list) {
-    return ...;
-  } else {
+  if (loading) {
     return <p>Loading...</p>;
+  } else if (error) {
+    return <p>Error.</p>
+  } else {
+    return (
+      // ...
+    );
   }
 }
 
