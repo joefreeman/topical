@@ -1,5 +1,12 @@
 # CHANGELOG
 
+
+## 0.3.1
+
+### Fixes
+
+- Update JavaScript client version to only notify initial topic if loaded.
+
 ## 0.3.0
 
 ### Improvements
