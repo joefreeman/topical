@@ -1,6 +1,6 @@
 {
   "name": "@topical/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React Topical client.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -20,13 +20,13 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "@topical/core": "^0.2.0"
-  },
   "peerDependencies": {
     "react": "^18.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.26"
+  },
+  "dependencies": {
+    "@topical/core": "^0.2.1"
   }
 }
