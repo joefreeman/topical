@@ -12,6 +12,7 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
     notify: (action: string, ...args: any[]) => void;
     execute: (action: string, ...args: any[]) => Promise<any>;
     error: any;
+    loading: boolean;
   },
 ] {
   const socket = useContext(Context);
@@ -38,10 +39,7 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
       );
     }
   }, [socket, ...topicParts]);
-  if (state && arrayEqual(topicParts, state[0])) {
-    const [_, value, error] = state;
-    return [value, { notify, execute, error }];
-  } else {
-    return [undefined, { notify, execute, error: undefined }];
-  }
+  const [stateTopic, value, error] = state || [undefined, undefined, undefined];
+  const loading = !stateTopic || !arrayEqual(topicParts, stateTopic);
+  return [value, { notify, execute, error, loading }];
 }
