@@ -112,15 +112,17 @@ export default class Socket {
       }
     }
     return () => {
-      const { listeners, channelId } = this.topics[key];
-      const index = listeners.indexOf(listener);
-      listeners.splice(index, 1);
-      if (!listeners.length) {
-        if (channelId && this.isConnected()) {
-          this.socket.send(JSON.stringify([3, channelId]));
-          delete this.subscriptions[channelId];
+      if (key in this.topics) {
+        const { listeners, channelId } = this.topics[key];
+        const index = listeners.indexOf(listener);
+        listeners.splice(index, 1);
+        if (!listeners.length) {
+          if (channelId && this.isConnected()) {
+            this.socket.send(JSON.stringify([3, channelId]));
+            delete this.subscriptions[channelId];
+          }
+          delete this.topics[key];
         }
-        delete this.topics[key];
       }
     };
   }
