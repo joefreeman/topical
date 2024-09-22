@@ -11,6 +11,7 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
   {
     notify: (action: string, ...args: any[]) => void;
     execute: (action: string, ...args: any[]) => Promise<any>;
+    error: any;
   },
 ] {
   const socket = useContext(Context);
@@ -39,11 +40,8 @@ export default function useTopic<T>(...topicParts: (string | undefined)[]): [
   }, [socket, ...topicParts]);
   if (state && arrayEqual(topicParts, state[0])) {
     const [_, value, error] = state;
-    if (error) {
-      throw new Error(error);
-    }
-    return [value, { notify, execute }];
+    return [value, { notify, execute, error }];
   } else {
-    return [undefined, { notify, execute }];
+    return [undefined, { notify, execute, error: undefined }];
   }
 }
