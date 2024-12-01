@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.2.3
+
+### Improvements
+
+- Fixes deprecation warning.
 
 ## 0.2.2
 

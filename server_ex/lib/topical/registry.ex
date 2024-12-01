@@ -17,22 +17,21 @@ defmodule Topical.Registry do
     )
   end
 
-  defp build_routes(modules) do
-    Enum.map(modules, fn module ->
-      route =
-        if is_binary(module.route) do
-          module.route
-          |> String.split("/")
-          |> Enum.map(fn
-            ":" <> atom -> String.to_atom(atom)
-            part -> URI.decode(part)
-          end)
-        else
-          module.route
-        end
+  defp parse_route(route) do
+    if is_binary(route) do
+      route
+      |> String.split("/")
+      |> Enum.map(fn
+        ":" <> atom -> String.to_atom(atom)
+        part -> URI.decode(part)
+      end)
+    else
+      route
+    end
+  end
 
-      {route, module}
-    end)
+  defp build_routes(modules) do
+    Enum.map(modules, &{parse_route(&1.route()), &1})
   end
 
   defp resolve_route(route, routes) do
