@@ -1,11 +1,16 @@
 # CHANGELOG
 
+## 0.3.2
+
+### Improvements
+
+- Updated React peer dependency to support React 19.
 
 ## 0.3.1
 
 ### Fixes
 
-- Update JavaScript client version to only notify initial topic if loaded.
+- Updated JavaScript client version to only notify initial topic if loaded.
 
 ## 0.3.0
 
