@@ -8,6 +8,18 @@ defmodule Topical.Topic.Server do
   """
 
   @doc """
+  Invoked to check whether a client is authorized to access this topic.
+
+  `params` are the values associated with the placeholders in the route.
+  `context` is the context established during the WebSocket connection.
+
+  Return `:ok` to allow access, or `{:error, reason}` to deny.
+
+  This callback is optional. The default implementation returns `:ok`.
+  """
+  @callback authorize(params :: keyword(), context :: any) :: :ok | {:error, reason :: any}
+
+  @doc """
   Invoked when the topic is started to get the initial state.
 
   `params` are the values associated with the placeholders in the route.

@@ -84,6 +84,10 @@ defmodule Topical.Topic do
         unquote(Keyword.fetch!(opts, :route))
       end
 
+      def authorize(_params, _context) do
+        :ok
+      end
+
       def handle_subscribe(topic, _context) do
         {:ok, topic}
       end
@@ -113,7 +117,8 @@ defmodule Topical.Topic do
         :ok
       end
 
-      defoverridable handle_subscribe: 2,
+      defoverridable authorize: 2,
+                     handle_subscribe: 2,
                      handle_unsubscribe: 2,
                      handle_capture: 2,
                      handle_execute: 4,

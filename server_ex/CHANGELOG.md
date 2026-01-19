@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.2.4
+
+### Features
+
+- Adds `authorize/2` callback for controlling access to topics based on context.
+
 ## 0.2.3
 
 ### Improvements
