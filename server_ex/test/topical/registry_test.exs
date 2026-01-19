@@ -155,8 +155,7 @@ defmodule Topical.RegistryTest do
       start_supervised!(
         %{
           id: registry1,
-          start:
-            {Registry, :start_link, [[name: registry1, topics: [Topical.Test.CounterTopic]]]}
+          start: {Registry, :start_link, [[name: registry1, topics: [Topical.Test.CounterTopic]]]}
         },
         id: :reg1
       )
@@ -164,8 +163,7 @@ defmodule Topical.RegistryTest do
       start_supervised!(
         %{
           id: registry2,
-          start:
-            {Registry, :start_link, [[name: registry2, topics: [Topical.Test.CounterTopic]]]}
+          start: {Registry, :start_link, [[name: registry2, topics: [Topical.Test.CounterTopic]]]}
         },
         id: :reg2
       )

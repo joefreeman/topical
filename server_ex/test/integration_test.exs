@@ -242,9 +242,9 @@ defmodule Topical.IntegrationTest do
       {:ok, value} = Topical.capture(registry, ["callbacks", "1"])
       # Note: capture also adds a {:capture, nil} callback, so check for unsubscribe presence
       assert Enum.any?(value.callbacks, fn
-        {:unsubscribe, ^context} -> true
-        _ -> false
-      end)
+               {:unsubscribe, ^context} -> true
+               _ -> false
+             end)
     end
 
     test "handle_capture is called on capture", %{registry: registry} do
@@ -261,9 +261,9 @@ defmodule Topical.IntegrationTest do
       {:ok, value} = Topical.capture(registry, ["callbacks", "1"])
       # Note: capture also adds a {:capture, nil} callback, so check for execute presence
       assert Enum.any?(value.callbacks, fn
-        {:execute, {"arg"}, ^context} -> true
-        _ -> false
-      end)
+               {:execute, {"arg"}, ^context} -> true
+               _ -> false
+             end)
     end
 
     test "handle_notify is called on notify", %{registry: registry} do
@@ -276,9 +276,9 @@ defmodule Topical.IntegrationTest do
       {:ok, value} = Topical.capture(registry, ["callbacks", "1"])
       # Note: capture also adds a {:capture, nil} callback, so check for notify presence
       assert Enum.any?(value.callbacks, fn
-        {:notify, {"arg"}, ^context} -> true
-        _ -> false
-      end)
+               {:notify, {"arg"}, ^context} -> true
+               _ -> false
+             end)
     end
   end
 
@@ -392,9 +392,9 @@ defmodule Topical.IntegrationTest do
       {:ok, value} = Topical.capture(registry, ["callbacks", "death-test"])
       # Note: capture also adds a {:capture, nil} callback, so check for unsubscribe presence
       assert Enum.any?(value.callbacks, fn
-        {:unsubscribe, _} -> true
-        _ -> false
-      end)
+               {:unsubscribe, _} -> true
+               _ -> false
+             end)
     end
   end
 
