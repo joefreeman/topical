@@ -74,34 +74,59 @@ defmodule Topical.Registry do
     end
   end
 
-  def get_topic(name, route) do
-    {registry_name, supervisor_name} = resolve_names(name)
+  @doc """
+  Looks up an existing topic without starting it.
+
+  Returns `{:ok, pid}` if the topic is running, or `{:error, :not_running}` if not.
+  """
+  def lookup_topic(name, route) do
+    {registry_name, _supervisor_name} = resolve_names(name)
 
     case Registry.lookup(registry_name, route) do
-      [{pid, _}] ->
-        {:ok, pid}
+      [{pid, _}] -> {:ok, pid}
+      [] -> {:error, :not_running}
+    end
+  end
 
-      [] ->
-        {:ok, routes} = Registry.meta(registry_name, :routes)
+  @doc """
+  Gets or starts a topic, after checking authorization.
 
-        case resolve_route(route, routes) do
-          {module, params} ->
-            spec =
-              {Topical.Topic.Server,
-               name: {:via, Registry, {registry_name, route}},
-               id: route,
-               module: module,
-               init_arg: params}
+  Returns `{:ok, pid}` if authorized and the topic is running (or was started),
+  or `{:error, reason}` if authorization fails or the topic cannot be started.
+  """
+  def get_topic(name, route, context) do
+    {registry_name, supervisor_name} = resolve_names(name)
+    {:ok, routes} = Registry.meta(registry_name, :routes)
 
-            case DynamicSupervisor.start_child(supervisor_name, spec) do
-              {:ok, pid} -> {:ok, pid}
-              {:error, {:already_started, pid}} -> {:ok, pid}
-              {:error, reason} -> {:error, reason}
+    case resolve_route(route, routes) do
+      {module, params} ->
+        case module.authorize(params, context) do
+          :ok ->
+            case Registry.lookup(registry_name, route) do
+              [{pid, _}] ->
+                {:ok, pid}
+
+              [] ->
+                spec =
+                  {Topical.Topic.Server,
+                   name: {:via, Registry, {registry_name, route}},
+                   id: route,
+                   module: module,
+                   init_arg: params}
+
+                case DynamicSupervisor.start_child(supervisor_name, spec) do
+                  {:ok, pid} -> {:ok, pid}
+                  {:error, {:already_started, pid}} -> {:ok, pid}
+                  {:error, reason} -> {:error, reason}
+                end
             end
 
-          nil ->
-            {:error, :not_found}
+          {:error, reason} ->
+            {:error, reason}
         end
+
+      nil ->
+        {:error, :not_found}
     end
   end
 

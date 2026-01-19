@@ -44,7 +44,7 @@ defmodule Topical do
 
   """
   def subscribe(registry, topic, pid, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
       # TODO: monitor/link server?
       {:ok, GenServer.call(server, {:subscribe, pid, context})}
     end
@@ -59,8 +59,7 @@ defmodule Topical do
 
   """
   def unsubscribe(registry, topic, ref) do
-    # TODO: don't start server if not running
-    with {:ok, server} <- Registry.get_topic(registry, topic) do
+    with {:ok, server} <- Registry.lookup_topic(registry, topic) do
       GenServer.cast(server, {:unsubscribe, ref})
     end
   end
@@ -74,7 +73,7 @@ defmodule Topical do
       # => {:ok, %{items: %{}, order: []}}
   """
   def capture(registry, topic, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
       {:ok, GenServer.call(server, {:capture, context})}
     end
   end
@@ -89,7 +88,7 @@ defmodule Topical do
 
   """
   def execute(registry, topic, action, args \\ {}, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
       {:ok, GenServer.call(server, {:execute, action, args, context})}
     end
   end
@@ -106,7 +105,7 @@ defmodule Topical do
 
   """
   def notify(registry, topic, action, args \\ {}, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
       GenServer.cast(server, {:notify, action, args, context})
     end
   end
