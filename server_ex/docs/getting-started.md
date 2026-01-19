@@ -53,6 +53,35 @@ defmodule MyApp.Topics.List do
 end
 ```
 
+## Authorization
+
+You can control access to topics by implementing the `authorize/2` callback. This is called
+before a topic is accessed (via subscribe, execute, notify, or capture). The callback receives
+the route params and the context (established during WebSocket connection):
+
+```elixir
+defmodule MyApp.Topics.PrivateList do
+  use Topical.Topic, route: ["lists", :list_id]
+
+  def authorize(params, context) do
+    list_id = Keyword.fetch!(params, :list_id)
+
+    if can_access_list?(context.user_id, list_id) do
+      :ok
+    else
+      {:error, :forbidden}
+    end
+  end
+
+  # ... other callbacks
+end
+```
+
+Return `:ok` to allow access, or `{:error, reason}` to deny. The default implementation
+allows all access.
+
+## Supervision
+
 Then add a Topical registry to your application supervision tree, referencing the topic:
 
 ```elixir
