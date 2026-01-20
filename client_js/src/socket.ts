@@ -43,9 +43,9 @@ function validateParams(params: ParamsInput): asserts params is Params {
 function topicKey(topic: string[], params: Params): string {
   const sortedParams = Object.keys(params)
     .sort()
-    .map((k) => `${k}=${params[k]}`)
+    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
     .join("&");
-  return `${topic.join("/")}?${sortedParams}`;
+  return `${topic.map(encodeURIComponent).join("/")}?${sortedParams}`;
 }
 
 export default class Socket {

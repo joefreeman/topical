@@ -1,29 +1,27 @@
 import { useState, useEffect, useCallback, useContext, useMemo } from "react";
-import { Params, ParamsInput } from "@topical/core";
+import { ParamsInput } from "@topical/core";
 
 import { Context } from "./provider";
 
-function arrayEqual(a: any[], b: any[]) {
-  return a.length == b.length && a.every((v, i) => v == b[i]);
-}
-
-function paramsEqual(a: ParamsInput, b: ParamsInput) {
-  const keysA = Object.keys(a).sort();
-  const keysB = Object.keys(b).sort();
+function subscriptionReady(
+  topic: (string | undefined)[],
+  params: ParamsInput,
+): boolean {
   return (
-    keysA.length === keysB.length &&
-    keysA.every((k, i) => k === keysB[i] && a[k] === b[k])
+    topic.every((p) => typeof p !== "undefined") &&
+    Object.keys(params).every((k) => typeof params[k] !== "undefined")
   );
 }
 
-function paramsReady(params: ParamsInput): params is Params {
-  return Object.keys(params).every((k) => typeof params[k] !== "undefined");
+// Generate a stable key for topic + params (handles undefined values)
+function identityKey(topic: (string | undefined)[], params: ParamsInput): string {
+  const topicPart = topic.map((p) => encodeURIComponent(p ?? "")).join("/");
+  const paramsPart = Object.keys(params)
+    .sort()
+    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k] ?? "")}`)
+    .join("&");
+  return `${topicPart}?${paramsPart}`;
 }
-
-type TopicIdentity = {
-  topic: (string | undefined)[];
-  params: ParamsInput;
-};
 
 export default function useTopic<T>(
   topic: (string | undefined)[],
@@ -38,46 +36,42 @@ export default function useTopic<T>(
   },
 ] {
   const socket = useContext(Context);
-  const [state, setState] = useState<[TopicIdentity, T | undefined, any]>();
+  const [state, setState] = useState<[string, T | undefined, any]>();
 
-  // Memoize params to avoid unnecessary re-renders
-  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
+  // Memoize topic and params together to avoid unnecessary re-renders
+  const key = identityKey(topic, params);
+  const { stableTopic, stableParams } = useMemo(
+    () => ({ stableTopic: topic, stableParams: params }),
+    [key],
+  );
 
   const notify = useCallback(
     (action: string, args: any[] = []) => {
-      return socket!.notify(topic, action, args, stableParams);
+      return socket!.notify(stableTopic, action, args, stableParams);
     },
-    [socket, ...topic, stableParams],
+    [socket, key],
   );
 
   const execute = useCallback(
     (action: string, args: any[] = []) => {
-      return socket!.execute(topic, action, args, stableParams);
+      return socket!.execute(stableTopic, action, args, stableParams);
     },
-    [socket, ...topic, stableParams],
+    [socket, key],
   );
 
   useEffect(() => {
-    const topicReady = !topic.some((p) => typeof p == "undefined");
-    if (topicReady && paramsReady(stableParams)) {
+    if (subscriptionReady(stableTopic, stableParams)) {
       return socket?.subscribe<T>(
-        topic,
+        stableTopic,
         stableParams,
-        (v) => setState([{ topic, params: stableParams }, v, undefined]),
-        (e) => setState([{ topic, params: stableParams }, undefined, e]),
+        (v) => setState([key, v, undefined]),
+        (e) => setState([key, undefined, e]),
       );
     }
-  }, [socket, ...topic, stableParams]);
+  }, [socket, key]);
 
-  const [stateIdentity, value, error] = state || [
-    undefined,
-    undefined,
-    undefined,
-  ];
-  const loading =
-    !stateIdentity ||
-    !arrayEqual(topic, stateIdentity.topic) ||
-    !paramsEqual(stableParams, stateIdentity.params);
+  const [stateKey, value, error] = state || [undefined, undefined, undefined];
+  const loading = stateKey !== key;
 
   return [value, { notify, execute, error, loading }];
 }
