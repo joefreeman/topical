@@ -130,9 +130,34 @@ export default class Socket {
     topic: (string | undefined)[],
     onUpdate: (value: T) => void,
     onError?: (error: any) => void,
-    params: Params = {},
-  ) {
-    const listener = { onUpdate, onError };
+  ): () => void;
+  subscribe<T>(
+    topic: (string | undefined)[],
+    params: Params,
+    onUpdate: (value: T) => void,
+    onError?: (error: any) => void,
+  ): () => void;
+  subscribe<T>(
+    topic: (string | undefined)[],
+    paramsOrOnUpdate: Params | ((value: T) => void),
+    onUpdateOrOnError?: ((value: T) => void) | ((error: any) => void),
+    onError?: (error: any) => void,
+  ): () => void {
+    let params: Params;
+    let onUpdate: (value: T) => void;
+    let errorHandler: ((error: any) => void) | undefined;
+
+    if (typeof paramsOrOnUpdate === "function") {
+      params = {};
+      onUpdate = paramsOrOnUpdate;
+      errorHandler = onUpdateOrOnError as ((error: any) => void) | undefined;
+    } else {
+      params = paramsOrOnUpdate;
+      onUpdate = onUpdateOrOnError as (value: T) => void;
+      errorHandler = onError;
+    }
+
+    const listener = { onUpdate, onError: errorHandler };
     validateTopic(topic);
     const key = topicKey(topic as string[], params);
     if (key in this.topics) {

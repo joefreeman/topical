@@ -41,19 +41,19 @@ unsubscribe();
 
 ## Parameters
 
-Topics can declare optional parameters. Pass params as the last argument to `subscribe`,
-`execute`, and `notify`:
+Topics can declare optional parameters. For `subscribe`, pass params after the topic and
+before the callbacks. For `execute` and `notify`, pass params as the last argument:
 
 ```typescript
-// Subscribe to a regional leaderboard
+// Subscribe to a regional leaderboard (params before callbacks)
 const unsubscribe = socket.subscribe<Leaderboard>(
   ["leaderboards", "chess"],
+  { region: "eu" },  // params
   (leaderboard) => { console.log(leaderboard); },
-  (error) => { ... },
-  { region: "eu" }  // params
+  (error) => { ... }
 );
 
-// Execute with params
+// Execute with params (params at end)
 await socket.execute(
   ["leaderboards", "chess"],
   "add_score",
@@ -61,7 +61,7 @@ await socket.execute(
   { region: "eu" }  // params
 );
 
-// Notify with params
+// Notify with params (params at end)
 socket.notify(
   ["leaderboards", "chess"],
   "add_score",

@@ -57,9 +57,9 @@ export default function useTopic<T>(
     if (!topic.some((p) => typeof p == "undefined")) {
       return socket?.subscribe<T>(
         topic,
+        stableParams,
         (v) => setState([{ topic, params: stableParams }, v, undefined]),
         (e) => setState([{ topic, params: stableParams }, undefined, e]),
-        stableParams,
       );
     }
   }, [socket, ...topic, stableParams]);
