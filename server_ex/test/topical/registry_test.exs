@@ -108,7 +108,9 @@ defmodule Topical.RegistryTest do
 
     test "denies access when unauthorized", %{registry: registry} do
       context = %{user_id: "other"}
-      assert {:error, :forbidden} = resolve_and_get_topic(registry, ["private", "owner1"], context)
+
+      assert {:error, :forbidden} =
+               resolve_and_get_topic(registry, ["private", "owner1"], context)
     end
 
     test "denies access when context is nil for authorized topic", %{registry: registry} do
@@ -117,7 +119,9 @@ defmodule Topical.RegistryTest do
 
     test "runs authorize before starting topic", %{registry: registry} do
       context = %{user_id: "wrong"}
-      assert {:error, :forbidden} = resolve_and_get_topic(registry, ["private", "owner1"], context)
+
+      assert {:error, :forbidden} =
+               resolve_and_get_topic(registry, ["private", "owner1"], context)
 
       # Topic should not have been started - trying to get it again with correct
       # context should start a new topic (proving it wasn't started before)
@@ -134,7 +138,9 @@ defmodule Topical.RegistryTest do
 
       # Second call with wrong context should still fail
       context2 = %{user_id: "wrong"}
-      assert {:error, :forbidden} = resolve_and_get_topic(registry, ["private", "owner1"], context2)
+
+      assert {:error, :forbidden} =
+               resolve_and_get_topic(registry, ["private", "owner1"], context2)
     end
   end
 

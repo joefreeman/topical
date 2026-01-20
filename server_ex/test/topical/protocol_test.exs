@@ -20,7 +20,8 @@ defmodule Topical.ProtocolTest do
     test "decodes execute request" do
       json = Jason.encode!([1, "ch1", ["counters", "1"], "increment", []])
 
-      assert {:ok, :execute, "ch1", ["counters", "1"], "increment", [], %{}} = Request.decode(json)
+      assert {:ok, :execute, "ch1", ["counters", "1"], "increment", [], %{}} =
+               Request.decode(json)
     end
 
     test "decodes execute request with params" do
