@@ -95,6 +95,24 @@ defmodule Topical.Registry do
   end
 
   @doc """
+  Returns the normalized topic key for a given route and params.
+
+  This is used by the websocket adapter to detect duplicate subscriptions
+  that would resolve to the same topic instance.
+
+  Returns `{:ok, topic_key}` or `{:error, reason}`.
+  """
+  def topic_key(name, route, request_params \\ %{}) do
+    {registry_name, _supervisor_name} = resolve_names(name)
+    {:ok, routes} = Registry.meta(registry_name, :routes)
+
+    case resolve_topic(route, routes, request_params) do
+      {:ok, _module, _all_params, topic_key} -> {:ok, topic_key}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Looks up an existing topic without starting it.
 
   Returns `{:ok, pid}` if the topic is running, or `{:error, :not_running}` if not.

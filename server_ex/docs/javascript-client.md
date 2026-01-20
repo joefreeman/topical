@@ -18,26 +18,61 @@ type ListModel = {
 // Setup the socket
 const socket = new Socket("ws://example.com/socket");
 
-// Subscribe to a topic (returns a function to unsibscribe)
+// Subscribe to a topic (returns a function to unsubscribe)
 const unsubscribe = socket.subscribe<ListModel>(
   ["lists", "foo"],
-  (list: ListModel) => { console.log(value); },
+  (list: ListModel) => { console.log(list); },
   (error) => { ... }
 );
 
-// Execute an action
-const itemId = await socket.execute(["lists", "foo"], "add_item", "First item");
+// Execute an action (args is an array)
+const itemId = await socket.execute(["lists", "foo"], "add_item", ["First item"]);
 
 // (The subscription should have been updated)
 
-// Send a notification
-socket.notify(["lists", "foo"], "update_item", itemId, "Inaugural item")
+// Send a notification (args is an array)
+socket.notify(["lists", "foo"], "update_item", [itemId, "Inaugural item"]);
 
 // (The subscription should have been updated again)
 
 // Unsubscribe
 unsubscribe();
 ```
+
+## Parameters
+
+Topics can declare optional parameters. Pass params as the last argument to `subscribe`,
+`execute`, and `notify`:
+
+```typescript
+// Subscribe to a regional leaderboard
+const unsubscribe = socket.subscribe<Leaderboard>(
+  ["leaderboards", "chess"],
+  (leaderboard) => { console.log(leaderboard); },
+  (error) => { ... },
+  { region: "eu" }  // params
+);
+
+// Execute with params
+await socket.execute(
+  ["leaderboards", "chess"],
+  "add_score",
+  ["alice", 100],   // args array
+  { region: "eu" }  // params
+);
+
+// Notify with params
+socket.notify(
+  ["leaderboards", "chess"],
+  "add_score",
+  ["bob", 200],     // args array
+  { region: "eu" }  // params
+);
+```
+
+Different param values create separate topic instances. The server handles deduplication
+automatically - if you subscribe to the same topic with equivalent params multiple times,
+the client will receive an alias response and merge the subscriptions.
 
 ## React client
 
@@ -72,9 +107,11 @@ Then use the `useTopic` hook in your components to subscribe to your topic:
 import { useTopic } from "@topical/react";
 
 function List({ id }) {
-  const [list, { execute, notify, loading, error }] = useTopic<models.List>("lists", id);
+  const [list, { execute, notify, loading, error }] = useTopic<models.List>(
+    ["lists", id]
+  );
   const addItem = useCallback(
-    (text: string) => execute("add_item", text),
+    (text: string) => execute("add_item", [text]),
     [execute]
   );
   if (loading) {
@@ -86,6 +123,26 @@ function List({ id }) {
       // ...
     );
   }
+}
+```
+
+### Parameters with useTopic
+
+Pass params as the second argument:
+
+```typescript
+function Leaderboard({ gameId, region }) {
+  const [leaderboard, { execute, loading, error }] = useTopic<models.Leaderboard>(
+    ["leaderboards", gameId],
+    { region }  // params
+  );
+
+  const addScore = useCallback(
+    (player: string, score: number) => execute("add_score", [player, score]),
+    [execute]
+  );
+
+  // ...
 }
 ```
 

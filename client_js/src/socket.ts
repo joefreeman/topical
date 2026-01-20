@@ -2,6 +2,8 @@ import { applyUpdate, Update } from "./updates";
 
 export type SocketState = "connecting" | "connected" | "disconnected";
 
+export type Params = Record<string, string>;
+
 type Listener<T> = {
   onUpdate: (value: T) => void;
   onError?: (error: any) => void;
@@ -10,6 +12,7 @@ type Listener<T> = {
 type Topic<T> = {
   listeners: Listener<T>[];
   topic: string[];
+  params: Params;
   channelId?: number;
   value?: T;
 };
@@ -25,6 +28,15 @@ function validateTopic(parts: (string | undefined)[]) {
   }
 }
 
+// Generate a deterministic key for topic + params combination
+function topicKey(topic: string[], params: Params): string {
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map((k) => `${k}=${params[k]}`)
+    .join("&");
+  return `${topic.join("/")}?${sortedParams}`;
+}
+
 export default class Socket {
   private socket: WebSocket;
   private closed = false;
@@ -33,6 +45,8 @@ export default class Socket {
   private topics: Record<string, Topic<any>> = {};
   private requests: Record<number, Request> = {};
   private subscriptions: Record<number, string> = {};
+  // Maps aliased channel IDs to their target channel IDs
+  private aliases: Record<number, number> = {};
   private listeners: ((state: SocketState) => void)[] = [];
 
   constructor(private readonly url: string) {
@@ -74,41 +88,64 @@ export default class Socket {
     this.socket.close();
   }
 
-  execute(topic: (string | undefined)[], action: string, ...args: any[]) {
+  execute(
+    topic: (string | undefined)[],
+    action: string,
+    args: any[] = [],
+    params: Params = {},
+  ) {
     if (!this.isConnected()) {
       return Promise.reject("not connected");
     }
     const channelId = ++this.lastChannelId;
     validateTopic(topic);
-    this.socket.send(JSON.stringify([1, channelId, topic, action, args]));
+    const message =
+      Object.keys(params).length > 0
+        ? [1, channelId, topic, action, args, params]
+        : [1, channelId, topic, action, args];
+    this.socket.send(JSON.stringify(message));
     return new Promise((resolve, reject) => {
       this.requests[channelId] = { onError: reject, onSuccess: resolve };
     });
   }
 
-  notify(topic: (string | undefined)[], action: string, ...args: any[]) {
+  notify(
+    topic: (string | undefined)[],
+    action: string,
+    args: any[] = [],
+    params: Params = {},
+  ) {
     if (!this.isConnected()) {
-      return Promise.reject("not connected");
+      return;
     }
     validateTopic(topic);
-    this.socket.send(JSON.stringify([0, topic, action, args]));
+    const message =
+      Object.keys(params).length > 0
+        ? [0, topic, action, args, params]
+        : [0, topic, action, args];
+    this.socket.send(JSON.stringify(message));
   }
 
   subscribe<T>(
     topic: (string | undefined)[],
     onUpdate: (value: T) => void,
     onError?: (error: any) => void,
+    params: Params = {},
   ) {
     const listener = { onUpdate, onError };
     validateTopic(topic);
-    const key = topic.join("/");
+    const key = topicKey(topic as string[], params);
     if (key in this.topics) {
       this.topics[key].listeners.push(listener);
       if ("value" in this.topics[key]) {
         listener.onUpdate(this.topics[key].value);
       }
     } else {
-      this.topics[key] = { listeners: [listener], topic: topic as string[] };
+      this.topics[key] = {
+        listeners: [listener],
+        topic: topic as string[],
+        params,
+      };
       if (this.isConnected()) {
         this.setupSubscription(key);
       }
@@ -136,8 +173,12 @@ export default class Socket {
 
   private setupSubscription(key: string) {
     const channelId = ++this.lastChannelId;
-    const topic = this.topics[key].topic;
-    this.socket.send(JSON.stringify([2, channelId, topic]));
+    const { topic, params } = this.topics[key];
+    const message =
+      Object.keys(params).length > 0
+        ? [2, channelId, topic, params]
+        : [2, channelId, topic];
+    this.socket.send(JSON.stringify(message));
     this.topics[key].channelId = channelId;
     this.subscriptions[channelId] = key;
   }
@@ -170,6 +211,9 @@ export default class Socket {
         break;
       case 3:
         this.handleTopicUpdates(message[1], message[2]);
+        break;
+      case 4:
+        this.handleTopicAlias(message[1], message[2]);
         break;
     }
   };
@@ -210,6 +254,33 @@ export default class Socket {
     }
   }
 
+  private handleTopicAlias(aliasedChannelId: number, targetChannelId: number) {
+    const aliasedKey = this.subscriptions[aliasedChannelId];
+    const targetKey = this.subscriptions[targetChannelId];
+
+    if (!aliasedKey || !targetKey) {
+      return;
+    }
+
+    const aliasedTopic = this.topics[aliasedKey];
+    const targetTopic = this.topics[targetKey];
+
+    // Move listeners from aliased topic to target topic
+    targetTopic.listeners.push(...aliasedTopic.listeners);
+
+    // If target has a value, notify the new listeners
+    if ("value" in targetTopic) {
+      aliasedTopic.listeners.forEach((l) => l.onUpdate(targetTopic.value));
+    }
+
+    // Clean up the aliased topic
+    delete this.topics[aliasedKey];
+    delete this.subscriptions[aliasedChannelId];
+
+    // Track the alias so unsubscribe works correctly
+    this.aliases[aliasedChannelId] = targetChannelId;
+  }
+
   private handleSocketClose = () => {
     this.setState("disconnected");
     this.socket.removeEventListener("open", this.handleSocketOpen);
@@ -220,6 +291,7 @@ export default class Socket {
       this.topics[key].channelId = undefined;
     }
     this.subscriptions = {};
+    this.aliases = {};
     for (const requestId in this.requests) {
       this.requests[requestId].onError();
     }
