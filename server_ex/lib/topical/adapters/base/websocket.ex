@@ -92,9 +92,9 @@ defmodule Topical.Adapters.Base.WebSocket do
   end
 
   defp handle_subscribe(channel_id, topic, params, state) do
-    # Get the normalized topic key to check for existing subscriptions
-    case Registry.topic_key(state.registry, topic, params) do
-      {:ok, topic_key} ->
+    # Resolve topic once - use for both alias detection and subscribing
+    case Registry.resolve_topic(state.registry, topic, params) do
+      {:ok, module, all_params, topic_key} ->
         case Map.fetch(state.topic_keys, topic_key) do
           {:ok, existing_channel_id} ->
             # Already subscribed to this topic - send alias response
@@ -102,7 +102,7 @@ defmodule Topical.Adapters.Base.WebSocket do
 
           :error ->
             # New subscription
-            do_subscribe(channel_id, topic, params, topic_key, state)
+            do_subscribe(channel_id, module, all_params, topic_key, state)
         end
 
       {:error, error} ->
@@ -110,13 +110,14 @@ defmodule Topical.Adapters.Base.WebSocket do
     end
   end
 
-  defp do_subscribe(channel_id, topic, params, topic_key, state) do
-    case Topical.subscribe(state.registry, topic, self(), state.context, params) do
-      {:ok, ref} ->
-        # Store params along with topic and ref for use during unsubscribe
+  defp do_subscribe(channel_id, module, all_params, topic_key, state) do
+    case Registry.get_topic(state.registry, module, all_params, topic_key, state.context) do
+      {:ok, server} ->
+        ref = GenServer.call(server, {:subscribe, self(), state.context})
+
         state =
           state
-          |> put_in([:channels, channel_id], {topic, ref, params, topic_key})
+          |> put_in([:channels, channel_id], {server, ref, topic_key})
           |> put_in([:channel_ids, ref], channel_id)
           |> put_in([:topic_keys, topic_key], channel_id)
 
@@ -129,8 +130,8 @@ defmodule Topical.Adapters.Base.WebSocket do
 
   defp handle_unsubscribe(channel_id, state) do
     case Map.fetch(state.channels, channel_id) do
-      {:ok, {topic, ref, params, topic_key}} ->
-        :ok = Topical.unsubscribe(state.registry, topic, ref, params)
+      {:ok, {server, ref, topic_key}} ->
+        Topical.unsubscribe(server, ref)
 
         state =
           state

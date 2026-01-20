@@ -107,8 +107,8 @@ defmodule Topical.ParamsTest do
       global_params = %{"region" => "global"}
       eu_params = %{"region" => "eu"}
 
-      {:ok, ref_global} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, global_params)
-      {:ok, ref_eu} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, eu_params)
+      {:ok, ref_global, _server1} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, global_params)
+      {:ok, ref_eu, _server2} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, eu_params)
 
       assert_receive {:reset, ^ref_global, value_global}
       assert_receive {:reset, ^ref_eu, value_eu}
@@ -127,8 +127,8 @@ defmodule Topical.ParamsTest do
     test "same region resolves to same leaderboard instance", %{registry: registry} do
       params = %{"region" => "na"}
 
-      {:ok, ref1} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, params)
-      {:ok, ref2} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, params)
+      {:ok, ref1, _server1} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, params)
+      {:ok, ref2, _server2} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, params)
 
       assert_receive {:reset, ^ref1, _}
       assert_receive {:reset, ^ref2, _}
@@ -143,9 +143,9 @@ defmodule Topical.ParamsTest do
 
     test "default params and explicit default params resolve to same topic", %{registry: registry} do
       # No params (uses default region: "global")
-      {:ok, ref1} = Topical.subscribe(registry, ["leaderboards", "chess"], self())
+      {:ok, ref1, _server1} = Topical.subscribe(registry, ["leaderboards", "chess"], self())
       # Explicit default params
-      {:ok, ref2} =
+      {:ok, ref2, _server2} =
         Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, %{"region" => "global"})
 
       assert_receive {:reset, ^ref1, _}
@@ -163,7 +163,7 @@ defmodule Topical.ParamsTest do
   describe "authorization with params" do
     test "view mode works without special permissions", %{registry: registry} do
       # View mode should work without context
-      {:ok, _ref} = Topical.subscribe(registry, ["documents", "doc1"], self())
+      {:ok, _ref, _server} = Topical.subscribe(registry, ["documents", "doc1"], self())
       assert_receive {:reset, _, %{mode: "view"}}
     end
 
@@ -179,7 +179,7 @@ defmodule Topical.ParamsTest do
       params = %{"mode" => "edit"}
       context = %{can_edit: true}
 
-      {:ok, _ref} = Topical.subscribe(registry, ["documents", "doc1"], self(), context, params)
+      {:ok, _ref, _server} = Topical.subscribe(registry, ["documents", "doc1"], self(), context, params)
       assert_receive {:reset, _, %{mode: "edit"}}
     end
   end
@@ -189,14 +189,14 @@ defmodule Topical.ParamsTest do
       global_params = %{"region" => "global"}
       eu_params = %{"region" => "eu"}
 
-      {:ok, ref_global} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, global_params)
-      {:ok, ref_eu} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, eu_params)
+      {:ok, ref_global, server_global} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, global_params)
+      {:ok, ref_eu, _server_eu} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, eu_params)
 
       assert_receive {:reset, ^ref_global, _}
       assert_receive {:reset, ^ref_eu, _}
 
       # Unsubscribe from global
-      :ok = Topical.unsubscribe(registry, ["leaderboards", "chess"], ref_global, global_params)
+      :ok = Topical.unsubscribe(server_global, ref_global)
 
       # Add to global - ref_global should not receive (unsubscribed)
       Topical.execute(registry, ["leaderboards", "chess"], "add_score", {"alice", 100}, nil, global_params)
@@ -213,7 +213,7 @@ defmodule Topical.ParamsTest do
       params = %{"region" => "asia"}
 
       # Create topic by subscribing
-      {:ok, _ref} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, params)
+      {:ok, _ref, _server} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, params)
       assert_receive {:reset, _, _}
 
       # Add a score
@@ -232,8 +232,8 @@ defmodule Topical.ParamsTest do
       global_params = %{"region" => "global"}
       eu_params = %{"region" => "eu"}
 
-      {:ok, ref_global} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, global_params)
-      {:ok, ref_eu} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, eu_params)
+      {:ok, ref_global, _server1} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, global_params)
+      {:ok, ref_eu, _server2} = Topical.subscribe(registry, ["leaderboards", "chess"], self(), nil, eu_params)
 
       assert_receive {:reset, ^ref_global, _}
       assert_receive {:reset, ^ref_eu, _}
@@ -250,7 +250,7 @@ defmodule Topical.ParamsTest do
   describe "topics without params" do
     test "topics without params work as before", %{registry: registry} do
       # CounterTopic has no params defined
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["counters", "1"], self())
       assert_receive {:reset, ^ref, %{count: 0}}
 
       {:ok, 1} = Topical.execute(registry, ["counters", "1"], "increment", {})
@@ -261,7 +261,7 @@ defmodule Topical.ParamsTest do
       # CounterTopic has no params, so these should be ignored
       params = %{"ignored" => "value"}
 
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self(), nil, params)
+      {:ok, ref, _server} = Topical.subscribe(registry, ["counters", "1"], self(), nil, params)
       assert_receive {:reset, ^ref, %{count: 0}}
     end
   end

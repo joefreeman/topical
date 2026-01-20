@@ -74,9 +74,17 @@ defmodule Topical.Registry do
     end
   end
 
-  # Resolves a route and normalizes request params.
-  # Returns {:ok, module, all_params, topic_key} or {:error, reason}
-  defp resolve_topic(route, routes, request_params) do
+  @doc """
+  Resolves a route and normalizes request params.
+
+  Returns `{:ok, module, all_params, topic_key}` or `{:error, reason}`.
+
+  The returned values can be passed to `get_topic/4` to avoid resolving twice.
+  """
+  def resolve_topic(name, route, request_params \\ %{}) do
+    {registry_name, _supervisor_name} = resolve_names(name)
+    {:ok, routes} = Registry.meta(registry_name, :routes)
+
     case resolve_route(route, routes) do
       {module, route_params} ->
         case normalize_params(request_params, module.params()) do
@@ -95,75 +103,39 @@ defmodule Topical.Registry do
   end
 
   @doc """
-  Returns the normalized topic key for a given route and params.
-
-  This is used by the websocket adapter to detect duplicate subscriptions
-  that would resolve to the same topic instance.
-
-  Returns `{:ok, topic_key}` or `{:error, reason}`.
-  """
-  def topic_key(name, route, request_params \\ %{}) do
-    {registry_name, _supervisor_name} = resolve_names(name)
-    {:ok, routes} = Registry.meta(registry_name, :routes)
-
-    case resolve_topic(route, routes, request_params) do
-      {:ok, _module, _all_params, topic_key} -> {:ok, topic_key}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @doc """
-  Looks up an existing topic without starting it.
-
-  Returns `{:ok, pid}` if the topic is running, or `{:error, :not_running}` if not.
-  """
-  def lookup_topic(name, route, request_params \\ %{}) do
-    {registry_name, _supervisor_name} = resolve_names(name)
-    {:ok, routes} = Registry.meta(registry_name, :routes)
-
-    with {:ok, _module, _all_params, topic_key} <- resolve_topic(route, routes, request_params) do
-      case Registry.lookup(registry_name, topic_key) do
-        [{pid, _}] -> {:ok, pid}
-        [] -> {:error, :not_running}
-      end
-    end
-  end
-
-  @doc """
   Gets or starts a topic, after checking authorization.
+
+  Accepts the resolved values from `resolve_topic/3`.
 
   Returns `{:ok, pid}` if authorized and the topic is running (or was started),
   or `{:error, reason}` if authorization fails or the topic cannot be started.
   """
-  def get_topic(name, route, context, request_params \\ %{}) do
+  def get_topic(name, module, all_params, topic_key, context) do
     {registry_name, supervisor_name} = resolve_names(name)
-    {:ok, routes} = Registry.meta(registry_name, :routes)
 
-    with {:ok, module, all_params, topic_key} <- resolve_topic(route, routes, request_params) do
-      case module.authorize(all_params, context) do
-        :ok ->
-          case Registry.lookup(registry_name, topic_key) do
-            [{pid, _}] ->
-              {:ok, pid}
+    case module.authorize(all_params, context) do
+      :ok ->
+        case Registry.lookup(registry_name, topic_key) do
+          [{pid, _}] ->
+            {:ok, pid}
 
-            [] ->
-              spec =
-                {Topical.Topic.Server,
-                 name: {:via, Registry, {registry_name, topic_key}},
-                 id: topic_key,
-                 module: module,
-                 init_arg: all_params}
+          [] ->
+            spec =
+              {Topical.Topic.Server,
+               name: {:via, Registry, {registry_name, topic_key}},
+               id: topic_key,
+               module: module,
+               init_arg: all_params}
 
-              case DynamicSupervisor.start_child(supervisor_name, spec) do
-                {:ok, pid} -> {:ok, pid}
-                {:error, {:already_started, pid}} -> {:ok, pid}
-                {:error, reason} -> {:error, reason}
-              end
-          end
+            case DynamicSupervisor.start_child(supervisor_name, spec) do
+              {:ok, pid} -> {:ok, pid}
+              {:error, {:already_started, pid}} -> {:ok, pid}
+              {:error, reason} -> {:error, reason}
+            end
+        end
 
-        {:error, reason} ->
-          {:error, reason}
-      end
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

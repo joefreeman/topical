@@ -30,14 +30,14 @@ defmodule Topical.IntegrationTest do
 
   describe "subscribe/4" do
     test "subscriber receives reset message", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["counters", "1"], self())
 
       assert_receive {:reset, ^ref, %{count: 0}}
     end
 
     test "returns ref that matches messages", %{registry: registry} do
-      {:ok, ref1} = Topical.subscribe(registry, ["counters", "1"], self())
-      {:ok, ref2} = Topical.subscribe(registry, ["counters", "2"], self())
+      {:ok, ref1, _server1} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref2, _server2} = Topical.subscribe(registry, ["counters", "2"], self())
 
       assert ref1 != ref2
 
@@ -46,7 +46,7 @@ defmodule Topical.IntegrationTest do
     end
 
     test "subscriber receives updates after subscribe", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["counters", "1"], self())
       assert_receive {:reset, ^ref, %{count: 0}}
 
       Topical.execute(registry, ["counters", "1"], "increment", {})
@@ -55,23 +55,16 @@ defmodule Topical.IntegrationTest do
     end
   end
 
-  describe "unsubscribe/3" do
+  describe "unsubscribe/2" do
     test "stops receiving updates after unsubscribe", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref, server} = Topical.subscribe(registry, ["counters", "1"], self())
       assert_receive {:reset, ^ref, %{count: 0}}
 
-      :ok = Topical.unsubscribe(registry, ["counters", "1"], ref)
+      Topical.unsubscribe(server, ref)
 
       Topical.execute(registry, ["counters", "1"], "increment", {})
 
       refute_receive {:updates, _, _}, 100
-    end
-
-    test "returns error for non-running topic", %{registry: registry} do
-      ref = make_ref()
-
-      assert {:error, :not_running} =
-               Topical.unsubscribe(registry, ["counters", "nonexistent"], ref)
     end
   end
 
@@ -85,7 +78,7 @@ defmodule Topical.IntegrationTest do
     end
 
     test "subscribers receive updates from execute", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["counters", "1"], self())
       assert_receive {:reset, ^ref, %{count: 0}}
 
       {:ok, _} = Topical.execute(registry, ["counters", "1"], "set", {42})
@@ -101,7 +94,7 @@ defmodule Topical.IntegrationTest do
 
   describe "notify/5" do
     test "sends notification to topic", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["counters", "1"], self())
       assert_receive {:reset, ^ref, %{count: 0}}
 
       :ok = Topical.notify(registry, ["counters", "1"], "increment", {})
@@ -142,8 +135,8 @@ defmodule Topical.IntegrationTest do
 
   describe "multiple subscribers" do
     test "all subscribers receive same updates", %{registry: registry} do
-      {:ok, ref1} = Topical.subscribe(registry, ["counters", "1"], self())
-      {:ok, ref2} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref1, _server1} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref2, _server2} = Topical.subscribe(registry, ["counters", "1"], self())
 
       assert_receive {:reset, ^ref1, %{count: 0}}
       assert_receive {:reset, ^ref2, %{count: 0}}
@@ -155,13 +148,13 @@ defmodule Topical.IntegrationTest do
     end
 
     test "unsubscribing one does not affect others", %{registry: registry} do
-      {:ok, ref1} = Topical.subscribe(registry, ["counters", "1"], self())
-      {:ok, ref2} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref1, server} = Topical.subscribe(registry, ["counters", "1"], self())
+      {:ok, ref2, _server2} = Topical.subscribe(registry, ["counters", "1"], self())
 
       assert_receive {:reset, ^ref1, _}
       assert_receive {:reset, ^ref2, _}
 
-      Topical.unsubscribe(registry, ["counters", "1"], ref1)
+      Topical.unsubscribe(server, ref1)
       Topical.execute(registry, ["counters", "1"], "increment", {})
 
       # ref1 should not receive update
@@ -176,7 +169,7 @@ defmodule Topical.IntegrationTest do
       assert {:error, :forbidden} =
                Topical.subscribe(registry, ["private", "owner1"], self(), %{user_id: "other"})
 
-      {:ok, _ref} =
+      {:ok, _ref, _server} =
         Topical.subscribe(registry, ["private", "owner1"], self(), %{user_id: "owner1"})
     end
 
@@ -225,7 +218,7 @@ defmodule Topical.IntegrationTest do
   describe "callback invocations" do
     test "handle_subscribe is called on subscribe", %{registry: registry} do
       context = %{user: "test"}
-      {:ok, ref} = Topical.subscribe(registry, ["callbacks", "1"], self(), context)
+      {:ok, ref, _server} = Topical.subscribe(registry, ["callbacks", "1"], self(), context)
 
       assert_receive {:reset, ^ref, %{callbacks: callbacks}}
       assert [{:subscribe, ^context}] = callbacks
@@ -233,10 +226,10 @@ defmodule Topical.IntegrationTest do
 
     test "handle_unsubscribe is called on unsubscribe", %{registry: registry} do
       context = %{user: "test"}
-      {:ok, ref} = Topical.subscribe(registry, ["callbacks", "1"], self(), context)
+      {:ok, ref, server} = Topical.subscribe(registry, ["callbacks", "1"], self(), context)
       assert_receive {:reset, ^ref, _}
 
-      Topical.unsubscribe(registry, ["callbacks", "1"], ref)
+      Topical.unsubscribe(server, ref)
 
       # Give time for unsubscribe to process
       Process.sleep(50)
@@ -286,32 +279,32 @@ defmodule Topical.IntegrationTest do
 
   describe "topic timeout" do
     test "topic stops after timeout with no subscribers", %{registry: registry} do
-      # Start a topic
-      {:ok, _} = Topical.execute(registry, ["counters", "timeout-test"], "increment", {})
+      # Start a topic and get the server PID
+      {:ok, sub_ref, server} = Topical.subscribe(registry, ["counters", "timeout-test"], self())
+      assert_receive {:reset, _, _}
+      assert Process.alive?(server)
 
-      {:ok, pid} = Topical.Registry.lookup_topic(registry, ["counters", "timeout-test"])
-      assert Process.alive?(pid)
+      # Unsubscribe so there are no subscribers
+      Topical.unsubscribe(server, sub_ref)
 
-      # Wait for timeout (10 seconds is default, but we'll just check the behavior)
       # We use a reference to monitor the process
-      ref = Process.monitor(pid)
+      ref = Process.monitor(server)
 
-      # Topic should still be running after short delay
-      refute_receive {:DOWN, ^ref, :process, ^pid, _}, 100
+      # Topic should still be running after short delay (timeout is 10 seconds)
+      refute_receive {:DOWN, ^ref, :process, ^server, _}, 100
 
       # Clean up
       Process.demonitor(ref, [:flush])
     end
 
     test "topic does not timeout while subscribed", %{registry: registry} do
-      {:ok, sub_ref} = Topical.subscribe(registry, ["counters", "sub-test"], self())
-      assert_receive {:reset, ^sub_ref, _}
+      {:ok, _sub_ref, server} = Topical.subscribe(registry, ["counters", "sub-test"], self())
+      assert_receive {:reset, _, _}
 
-      {:ok, pid} = Topical.Registry.lookup_topic(registry, ["counters", "sub-test"])
-      mon_ref = Process.monitor(pid)
+      mon_ref = Process.monitor(server)
 
       # Should not timeout while subscribed
-      refute_receive {:DOWN, ^mon_ref, :process, ^pid, _}, 200
+      refute_receive {:DOWN, ^mon_ref, :process, ^server, _}, 200
 
       Process.demonitor(mon_ref, [:flush])
     end
@@ -319,7 +312,7 @@ defmodule Topical.IntegrationTest do
 
   describe "list operations" do
     test "insert operations broadcast to subscribers", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["lists", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["lists", "1"], self())
       assert_receive {:reset, ^ref, %{items: [], next_id: 1}}
 
       {:ok, 1} = Topical.execute(registry, ["lists", "1"], "add", {"first"})
@@ -329,7 +322,7 @@ defmodule Topical.IntegrationTest do
     end
 
     test "delete operations broadcast to subscribers", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["lists", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["lists", "1"], self())
       assert_receive {:reset, ^ref, _}
 
       {:ok, _} = Topical.execute(registry, ["lists", "1"], "add", {"first"})
@@ -346,7 +339,7 @@ defmodule Topical.IntegrationTest do
 
   describe "merge operations" do
     test "merge operations broadcast to subscribers", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["merge", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["merge", "1"], self())
       assert_receive {:reset, ^ref, %{data: %{}}}
 
       {:ok, _} = Topical.execute(registry, ["merge", "1"], "merge", {%{a: 1, b: 2}})
@@ -355,7 +348,7 @@ defmodule Topical.IntegrationTest do
     end
 
     test "unset operations broadcast to subscribers", %{registry: registry} do
-      {:ok, ref} = Topical.subscribe(registry, ["merge", "1"], self())
+      {:ok, ref, _server} = Topical.subscribe(registry, ["merge", "1"], self())
       assert_receive {:reset, ^ref, _}
 
       {:ok, _} = Topical.execute(registry, ["merge", "1"], "set", {:key, "value"})
@@ -374,7 +367,7 @@ defmodule Topical.IntegrationTest do
 
       subscriber =
         spawn(fn ->
-          {:ok, _ref} = Topical.subscribe(registry, ["callbacks", "death-test"], self())
+          {:ok, _ref, _server} = Topical.subscribe(registry, ["callbacks", "death-test"], self())
           send(test_pid, :subscribed)
 
           receive do
