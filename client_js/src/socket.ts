@@ -1,4 +1,4 @@
-import { applyUpdate, Update } from "./updates";
+import { applyUpdate, type Update } from "./updates";
 
 export type SocketState = "connecting" | "connected" | "disconnected";
 
@@ -9,7 +9,7 @@ export type ParamsInput = Record<string, string | undefined>;
 
 type Listener<T> = {
   onUpdate: (value: T) => void;
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
 };
 
 type Topic<T> = {
@@ -22,11 +22,13 @@ type Topic<T> = {
 
 type Request = {
   onSuccess: (value: unknown) => void;
-  onError: (reason?: any) => void;
+  onError: (reason?: unknown) => void;
 };
 
-function validateTopic(parts: (string | undefined)[]): asserts parts is string[] {
-  if (parts.some((p) => typeof p == "undefined")) {
+function validateTopic(
+  parts: (string | undefined)[],
+): asserts parts is string[] {
+  if (parts.some((p) => typeof p === "undefined")) {
     throw new Error("topic component is undefined");
   }
 }
@@ -53,7 +55,7 @@ export default class Socket {
   private closed = false;
   private state: SocketState = "disconnected";
   private lastChannelId = 0;
-  private topics: Record<string, Topic<any>> = {};
+  private topics: Record<string, Topic<unknown>> = {};
   private requests: Record<number, Request> = {};
   private subscriptions: Record<number, string> = {};
   // Maps aliased channel IDs to their target channel IDs
@@ -80,7 +82,7 @@ export default class Socket {
   }
 
   isConnected() {
-    return this.state == "connected";
+    return this.state === "connected";
   }
 
   addListener(listener: (state: SocketState) => void) {
@@ -102,7 +104,7 @@ export default class Socket {
   execute(
     topic: (string | undefined)[],
     action: string,
-    args: any[] = [],
+    args: unknown[] = [],
     params: ParamsInput = {},
   ) {
     if (!this.isConnected()) {
@@ -124,7 +126,7 @@ export default class Socket {
   notify(
     topic: (string | undefined)[],
     action: string,
-    args: any[] = [],
+    args: unknown[] = [],
     params: ParamsInput = {},
   ) {
     if (!this.isConnected()) {
@@ -142,42 +144,47 @@ export default class Socket {
   subscribe<T>(
     topic: (string | undefined)[],
     onUpdate: (value: T) => void,
-    onError?: (error: any) => void,
+    onError?: (error: unknown) => void,
   ): () => void;
   subscribe<T>(
     topic: (string | undefined)[],
     params: ParamsInput,
     onUpdate: (value: T) => void,
-    onError?: (error: any) => void,
+    onError?: (error: unknown) => void,
   ): () => void;
   subscribe<T>(
     topic: (string | undefined)[],
     paramsOrOnUpdate: ParamsInput | ((value: T) => void),
-    onUpdateOrOnError?: ((value: T) => void) | ((error: any) => void),
-    onError?: (error: any) => void,
+    onUpdateOrOnError?: ((value: T) => void) | ((error: unknown) => void),
+    onError?: (error: unknown) => void,
   ): () => void {
     let params: ParamsInput;
     let onUpdate: (value: T) => void;
-    let errorHandler: ((error: any) => void) | undefined;
+    let errorHandler: ((error: unknown) => void) | undefined;
 
     if (typeof paramsOrOnUpdate === "function") {
       params = {};
       onUpdate = paramsOrOnUpdate;
-      errorHandler = onUpdateOrOnError as ((error: any) => void) | undefined;
+      errorHandler = onUpdateOrOnError as
+        | ((error: unknown) => void)
+        | undefined;
     } else {
       params = paramsOrOnUpdate;
       onUpdate = onUpdateOrOnError as (value: T) => void;
       errorHandler = onError;
     }
 
-    const listener = { onUpdate, onError: errorHandler };
+    const listener = {
+      onUpdate: onUpdate as (value: unknown) => void,
+      onError: errorHandler,
+    };
     validateTopic(topic);
     validateParams(params);
     const key = topicKey(topic, params);
     if (key in this.topics) {
       this.topics[key].listeners.push(listener);
       if ("value" in this.topics[key]) {
-        listener.onUpdate(this.topics[key].value);
+        onUpdate(this.topics[key].value as T);
       }
     } else {
       this.topics[key] = {
@@ -207,7 +214,9 @@ export default class Socket {
 
   private setState(state: SocketState) {
     this.state = state;
-    this.listeners.forEach((listener) => listener(state));
+    this.listeners.forEach((listener) => {
+      listener(state);
+    });
   }
 
   private setupSubscription(key: string) {
@@ -257,12 +266,12 @@ export default class Socket {
     }
   };
 
-  private handleError(channelId: number, error: any) {
+  private handleError(channelId: number, error: unknown) {
     if (channelId in this.subscriptions) {
       const key = this.subscriptions[channelId];
-      this.topics[key].listeners.forEach(
-        ({ onError }) => onError && onError(error),
-      );
+      this.topics[key].listeners.forEach(({ onError }) => {
+        onError?.(error);
+      });
       delete this.topics[key];
       delete this.subscriptions[channelId];
     } else {
@@ -271,16 +280,18 @@ export default class Socket {
     }
   }
 
-  private handleResult(channelId: number, result: any) {
+  private handleResult(channelId: number, result: unknown) {
     this.requests[channelId].onSuccess(result);
     delete this.requests[channelId];
   }
 
-  private handleTopicReset(channelId: number, value: any) {
+  private handleTopicReset(channelId: number, value: unknown) {
     const key = this.subscriptions[channelId];
     if (key) {
       this.topics[key].value = value;
-      this.topics[key].listeners.forEach((l) => l.onUpdate(value));
+      this.topics[key].listeners.forEach((l) => {
+        l.onUpdate(value);
+      });
     }
   }
 
@@ -289,7 +300,9 @@ export default class Socket {
     if (key) {
       const value = updates.reduce(applyUpdate, this.topics[key].value);
       this.topics[key].value = value;
-      this.topics[key].listeners.forEach((l) => l.onUpdate(value));
+      this.topics[key].listeners.forEach((l) => {
+        l.onUpdate(value);
+      });
     }
   }
 
@@ -309,7 +322,9 @@ export default class Socket {
 
     // If target has a value, notify the new listeners
     if ("value" in targetTopic) {
-      aliasedTopic.listeners.forEach((l) => l.onUpdate(targetTopic.value));
+      aliasedTopic.listeners.forEach((l) => {
+        l.onUpdate(targetTopic.value);
+      });
     }
 
     // Clean up the aliased topic
