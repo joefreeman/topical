@@ -23,14 +23,14 @@ defmodule Topical.Adapters.Base.WebSocket do
 
   def handle_text(text, state) do
     case Request.decode(text) do
-      {:ok, :notify, topic, action, args} ->
-        handle_notify(topic, action, args, state)
+      {:ok, :notify, topic, action, args, params} ->
+        handle_notify(topic, action, args, params, state)
 
-      {:ok, :execute, channel_id, topic, action, args} ->
-        handle_execute(channel_id, topic, action, args, state)
+      {:ok, :execute, channel_id, topic, action, args, params} ->
+        handle_execute(channel_id, topic, action, args, params, state)
 
-      {:ok, :subscribe, channel_id, topic} ->
-        handle_subscribe(channel_id, topic, state)
+      {:ok, :subscribe, channel_id, topic, params} ->
+        handle_subscribe(channel_id, topic, params, state)
 
       {:ok, :unsubscribe, channel_id} ->
         handle_unsubscribe(channel_id, state)
@@ -62,17 +62,24 @@ defmodule Topical.Adapters.Base.WebSocket do
     end
   end
 
-  defp handle_notify(topic, action, args, state) do
+  defp handle_notify(topic, action, args, params, state) do
     # TODO: handle some errors (e.g., with lookup/init topic?)
-    case Topical.notify(state.registry, topic, action, List.to_tuple(args), state.context) do
+    case Topical.notify(state.registry, topic, action, List.to_tuple(args), state.context, params) do
       :ok ->
         {:ok, [], state}
     end
   end
 
-  defp handle_execute(channel_id, topic, action, args, state) do
+  defp handle_execute(channel_id, topic, action, args, params, state) do
     # TODO: don't block?
-    case Topical.execute(state.registry, topic, action, List.to_tuple(args), state.context) do
+    case Topical.execute(
+           state.registry,
+           topic,
+           action,
+           List.to_tuple(args),
+           state.context,
+           params
+         ) do
       {:ok, result} ->
         {:ok, [Response.encode_result(channel_id, result)], state}
 
@@ -81,12 +88,13 @@ defmodule Topical.Adapters.Base.WebSocket do
     end
   end
 
-  defp handle_subscribe(channel_id, topic, state) do
-    case Topical.subscribe(state.registry, topic, self(), state.context) do
+  defp handle_subscribe(channel_id, topic, params, state) do
+    case Topical.subscribe(state.registry, topic, self(), state.context, params) do
       {:ok, ref} ->
+        # Store params along with topic and ref for use during unsubscribe
         state =
           state
-          |> put_in([:channels, channel_id], {topic, ref})
+          |> put_in([:channels, channel_id], {topic, ref, params})
           |> put_in([:channel_ids, ref], channel_id)
 
         {:ok, [], state}
@@ -98,8 +106,8 @@ defmodule Topical.Adapters.Base.WebSocket do
 
   defp handle_unsubscribe(channel_id, state) do
     case Map.fetch(state.channels, channel_id) do
-      {:ok, {topic, ref}} ->
-        :ok = Topical.unsubscribe(state.registry, topic, ref)
+      {:ok, {topic, ref, params}} ->
+        :ok = Topical.unsubscribe(state.registry, topic, ref, params)
 
         state =
           state

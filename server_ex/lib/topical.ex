@@ -37,14 +37,22 @@ defmodule Topical do
 
   The `pid` will be send messages, as described above.
 
+  ## Options
+
+    * `params` - Optional map of params to pass to the topic (default: `%{}`).
+      These are merged with route params and passed to `init/1` and `authorize/2`.
+
   ## Example
 
       Topical.subscribe(MyApp.Topical, ["lists", "foo"], self())
       #=> {:ok, #Reference<0.4021726225.4145020932.239110>}
 
+      Topical.subscribe(MyApp.Topical, ["canvases", "1"], self(), nil, %{"layer" => "bg"})
+      #=> {:ok, #Reference<0.4021726225.4145020932.239111>}
+
   """
-  def subscribe(registry, topic, pid, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
+  def subscribe(registry, topic, pid, context \\ nil, params \\ %{}) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context, params) do
       # TODO: monitor/link server?
       {:ok, GenServer.call(server, {:subscribe, pid, context})}
     end
@@ -53,13 +61,17 @@ defmodule Topical do
   @doc """
   Unsubscribes from a `topic` (in the specified `registry`).
 
+  ## Options
+
+    * `params` - Optional map of params that were used when subscribing (default: `%{}`).
+
   ## Example
 
       Topical.unsubscribe(MyApp.Topical, ["lists", "foo"], ref)
 
   """
-  def unsubscribe(registry, topic, ref) do
-    with {:ok, server} <- Registry.lookup_topic(registry, topic) do
+  def unsubscribe(registry, topic, ref, params \\ %{}) do
+    with {:ok, server} <- Registry.lookup_topic(registry, topic, params) do
       GenServer.cast(server, {:unsubscribe, ref})
     end
   end
@@ -67,13 +79,17 @@ defmodule Topical do
   @doc """
   Captures the state of the `topic` (in the specified `registry`) without subscribing.
 
+  ## Options
+
+    * `params` - Optional map of params to pass to the topic (default: `%{}`).
+
   ## Example
 
       Topical.capture(MyApp.Topical, ["lists", "foo"])
       # => {:ok, %{items: %{}, order: []}}
   """
-  def capture(registry, topic, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
+  def capture(registry, topic, context \\ nil, params \\ %{}) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context, params) do
       {:ok, GenServer.call(server, {:capture, context})}
     end
   end
@@ -81,14 +97,18 @@ defmodule Topical do
   @doc """
   Executes an action in a `topic`.
 
+  ## Options
+
+    * `params` - Optional map of params to pass to the topic (default: `%{}`).
+
   ## Example
 
       Topical.execute(MyApp.Topical, ["lists", "foo"], "add_item", {"Test", false})
       #=> {:ok, "item123"}
 
   """
-  def execute(registry, topic, action, args \\ {}, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
+  def execute(registry, topic, action, args \\ {}, context \\ nil, params \\ %{}) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context, params) do
       {:ok, GenServer.call(server, {:execute, action, args, context})}
     end
   end
@@ -98,14 +118,18 @@ defmodule Topical do
 
   This is similar to `execute/4`, except no result is waited for.
 
+  ## Options
+
+    * `params` - Optional map of params to pass to the topic (default: `%{}`).
+
   ## Example
 
       Topical.notify(MyApp.Topical, ["lists", "foo"], "update_done", {"item123", true})
       #=> :ok
 
   """
-  def notify(registry, topic, action, args \\ {}, context \\ nil) do
-    with {:ok, server} <- Registry.get_topic(registry, topic, context) do
+  def notify(registry, topic, action, args \\ {}, context \\ nil, params \\ %{}) do
+    with {:ok, server} <- Registry.get_topic(registry, topic, context, params) do
       GenServer.cast(server, {:notify, action, args, context})
     end
   end

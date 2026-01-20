@@ -6,15 +6,28 @@ defmodule Topical.Protocol do
 
     def decode(text) do
       case Jason.decode(text) do
+        # Notify: [0, topic, action, args] or [0, topic, action, args, params]
         {:ok, [0, topic, action, args]} ->
-          {:ok, :notify, topic, action, args}
+          {:ok, :notify, topic, action, args, %{}}
 
+        {:ok, [0, topic, action, args, params]} when is_map(params) ->
+          {:ok, :notify, topic, action, args, params}
+
+        # Execute: [1, channel_id, topic, action, args] or [1, channel_id, topic, action, args, params]
         {:ok, [1, channel_id, topic, action, args]} ->
-          {:ok, :execute, channel_id, topic, action, args}
+          {:ok, :execute, channel_id, topic, action, args, %{}}
 
+        {:ok, [1, channel_id, topic, action, args, params]} when is_map(params) ->
+          {:ok, :execute, channel_id, topic, action, args, params}
+
+        # Subscribe: [2, channel_id, topic] or [2, channel_id, topic, params]
         {:ok, [2, channel_id, topic]} ->
-          {:ok, :subscribe, channel_id, topic}
+          {:ok, :subscribe, channel_id, topic, %{}}
 
+        {:ok, [2, channel_id, topic, params]} when is_map(params) ->
+          {:ok, :subscribe, channel_id, topic, params}
+
+        # Unsubscribe: [3, channel_id]
         {:ok, [3, channel_id]} ->
           {:ok, :unsubscribe, channel_id}
 

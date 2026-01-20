@@ -17,7 +17,9 @@ defmodule Topical.IntegrationTest do
                Topical.Test.CallbackTopic,
                Topical.Test.FailingTopic,
                Topical.Test.ListTopic,
-               Topical.Test.MergeTopic
+               Topical.Test.MergeTopic,
+               Topical.Test.LeaderboardTopic,
+               Topical.Test.DocumentTopic
              ]
            ]
          ]}
