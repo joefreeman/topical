@@ -41,6 +41,7 @@ defmodule Topical do
 
     * `params` - Optional map of params to pass to the topic (default: `%{}`).
       These are merged with route params and passed to `init/1` and `authorize/2`.
+      Topics with different param values are separate instances and do not share state.
 
   ## Example
 
