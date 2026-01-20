@@ -4,6 +4,9 @@ export type SocketState = "connecting" | "connected" | "disconnected";
 
 export type Params = Record<string, string>;
 
+// Input type that allows undefined values (validated at runtime)
+export type ParamsInput = Record<string, string | undefined>;
+
 type Listener<T> = {
   onUpdate: (value: T) => void;
   onError?: (error: any) => void;
@@ -22,9 +25,17 @@ type Request = {
   onError: (reason?: any) => void;
 };
 
-function validateTopic(parts: (string | undefined)[]) {
+function validateTopic(parts: (string | undefined)[]): asserts parts is string[] {
   if (parts.some((p) => typeof p == "undefined")) {
     throw new Error("topic component is undefined");
+  }
+}
+
+function validateParams(params: ParamsInput): asserts params is Params {
+  for (const key of Object.keys(params)) {
+    if (typeof params[key] === "undefined") {
+      throw new Error(`param "${key}" is undefined`);
+    }
   }
 }
 
@@ -92,13 +103,14 @@ export default class Socket {
     topic: (string | undefined)[],
     action: string,
     args: any[] = [],
-    params: Params = {},
+    params: ParamsInput = {},
   ) {
     if (!this.isConnected()) {
       return Promise.reject("not connected");
     }
     const channelId = ++this.lastChannelId;
     validateTopic(topic);
+    validateParams(params);
     const message =
       Object.keys(params).length > 0
         ? [1, channelId, topic, action, args, params]
@@ -113,12 +125,13 @@ export default class Socket {
     topic: (string | undefined)[],
     action: string,
     args: any[] = [],
-    params: Params = {},
+    params: ParamsInput = {},
   ) {
     if (!this.isConnected()) {
       return;
     }
     validateTopic(topic);
+    validateParams(params);
     const message =
       Object.keys(params).length > 0
         ? [0, topic, action, args, params]
@@ -133,17 +146,17 @@ export default class Socket {
   ): () => void;
   subscribe<T>(
     topic: (string | undefined)[],
-    params: Params,
+    params: ParamsInput,
     onUpdate: (value: T) => void,
     onError?: (error: any) => void,
   ): () => void;
   subscribe<T>(
     topic: (string | undefined)[],
-    paramsOrOnUpdate: Params | ((value: T) => void),
+    paramsOrOnUpdate: ParamsInput | ((value: T) => void),
     onUpdateOrOnError?: ((value: T) => void) | ((error: any) => void),
     onError?: (error: any) => void,
   ): () => void {
-    let params: Params;
+    let params: ParamsInput;
     let onUpdate: (value: T) => void;
     let errorHandler: ((error: any) => void) | undefined;
 
@@ -159,7 +172,8 @@ export default class Socket {
 
     const listener = { onUpdate, onError: errorHandler };
     validateTopic(topic);
-    const key = topicKey(topic as string[], params);
+    validateParams(params);
+    const key = topicKey(topic, params);
     if (key in this.topics) {
       this.topics[key].listeners.push(listener);
       if ("value" in this.topics[key]) {
@@ -168,7 +182,7 @@ export default class Socket {
     } else {
       this.topics[key] = {
         listeners: [listener],
-        topic: topic as string[],
+        topic: topic,
         params,
       };
       if (this.isConnected()) {

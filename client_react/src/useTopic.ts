@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useContext, useMemo } from "react";
-import { Params } from "@topical/core";
+import { Params, ParamsInput } from "@topical/core";
 
 import { Context } from "./provider";
 
@@ -7,7 +7,7 @@ function arrayEqual(a: any[], b: any[]) {
   return a.length == b.length && a.every((v, i) => v == b[i]);
 }
 
-function paramsEqual(a: Params, b: Params) {
+function paramsEqual(a: ParamsInput, b: ParamsInput) {
   const keysA = Object.keys(a).sort();
   const keysB = Object.keys(b).sort();
   return (
@@ -16,14 +16,18 @@ function paramsEqual(a: Params, b: Params) {
   );
 }
 
+function paramsReady(params: ParamsInput): params is Params {
+  return Object.keys(params).every((k) => typeof params[k] !== "undefined");
+}
+
 type TopicIdentity = {
   topic: (string | undefined)[];
-  params: Params;
+  params: ParamsInput;
 };
 
 export default function useTopic<T>(
   topic: (string | undefined)[],
-  params: Params = {},
+  params: ParamsInput = {},
 ): [
   T | undefined,
   {
@@ -54,7 +58,8 @@ export default function useTopic<T>(
   );
 
   useEffect(() => {
-    if (!topic.some((p) => typeof p == "undefined")) {
+    const topicReady = !topic.some((p) => typeof p == "undefined");
+    if (topicReady && paramsReady(stableParams)) {
       return socket?.subscribe<T>(
         topic,
         stableParams,

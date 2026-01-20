@@ -1,1 +1,1 @@
-export { default as Socket, SocketState, Params } from "./socket";
+export { default as Socket, SocketState, Params, ParamsInput } from "./socket";
