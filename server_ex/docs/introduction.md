@@ -4,9 +4,10 @@ Topical is a library for defining and serving _topics_. A topic is a value that 
 observed in real-time by connected clients. The server-side implementation takes care of defining
 how to intialise the state, and then how to keep it updated.
 
-Multiple clients can subscribe to an instance of a topic - instances are identifier by a path,
+Multiple clients can subscribe to an instance of a topic - instances are identified by a path,
 which matches the route defined by a topic. Multiple instances of a topic can exist by using route
-placeholders.
+placeholders. Topics can also declare optional parameters; different parameter values create
+separate instances sharing the same route.
 
 Topical takes care of starting topic instances as needed, and stopping them once all clients have
 disconnected.

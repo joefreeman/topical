@@ -80,6 +80,36 @@ end
 Return `:ok` to allow access, or `{:error, reason}` to deny. The default implementation
 allows all access.
 
+## Parameters
+
+Topics can declare optional parameters with default values. Different parameter values create
+separate topic instances:
+
+```elixir
+defmodule MyApp.Topics.Leaderboard do
+  use Topical.Topic, route: ["leaderboards", :game_id], params: [region: "global"]
+
+  def init(params) do
+    game_id = Keyword.fetch!(params, :game_id)
+    region = Keyword.fetch!(params, :region)
+
+    {:ok, Topic.new(%{game_id: game_id, region: region, entries: []})}
+  end
+end
+```
+
+Clients subscribe with params to access specific instances:
+
+```elixir
+# Uses default region "global"
+Topical.subscribe(MyApp.Topical, ["leaderboards", "chess"], self())
+
+# Subscribes to EU region (separate instance)
+Topical.subscribe(MyApp.Topical, ["leaderboards", "chess"], self(), nil, %{"region" => "eu"})
+```
+
+Parameters are also available in `authorize/2` for access control based on param values.
+
 ## Supervision
 
 Then add a Topical registry to your application supervision tree, referencing the topic:
