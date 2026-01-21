@@ -1,0 +1,43 @@
+name: Docs
+
+on:
+  push:
+    tags:
+      - "server_ex/v*"
+      - "client_js/v*"
+      - "client_react/v*"
+
+jobs:
+  publish:
+    name: Publish to HexDocs
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server_ex
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18"
+          otp-version: "27"
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            server_ex/deps
+            server_ex/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('server_ex/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Publish docs to HexDocs
+        run: mix hex.publish docs --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
