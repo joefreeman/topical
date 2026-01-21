@@ -1,6 +1,6 @@
 {
   "name": "@topical/core",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Vanilla Topical client.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -8,7 +8,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run clean && npm run build",
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "biome check",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck",
+    "format": "biome format --write"
   },
   "repository": {
     "type": "git",
@@ -17,5 +21,11 @@
   "author": "Joe Freeman",
   "license": "Apache-2.0",
   "homepage": "https://github.com/joefreeman/topical#readme",
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "typescript": "^5.9.3"
+  }
 }

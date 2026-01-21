@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.3.0
+
+### Features
+
+- Adds support for optional topic parameters.
 
 ## 0.2.2
 

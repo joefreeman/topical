@@ -102,11 +102,6 @@ jobs:
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
 
-      - name: Publish docs to HexDocs
-        run: mix hex.publish docs --yes
-        env:
-          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
