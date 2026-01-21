@@ -75,6 +75,19 @@ defmodule Topical.Topic do
 
   @doc false
   defmacro __using__(opts) do
+    route = Keyword.fetch!(opts, :route)
+    params = Keyword.get(opts, :params, [])
+
+    # Compile-time validation: check for conflicts between param names and route placeholders
+    route_placeholders = for part <- route, is_atom(part), do: part
+    param_names = Keyword.keys(params)
+    conflicts = param_names -- (param_names -- route_placeholders)
+
+    if conflicts != [] do
+      raise ArgumentError,
+            "param names conflict with route placeholders: #{inspect(conflicts)}"
+    end
+
     quote location: :keep, bind_quoted: [opts: opts] do
       @behaviour Topical.Topic.Server
 
@@ -82,6 +95,10 @@ defmodule Topical.Topic do
 
       def route() do
         unquote(Keyword.fetch!(opts, :route))
+      end
+
+      def params() do
+        unquote(Keyword.get(opts, :params, []))
       end
 
       def authorize(_params, _context) do
