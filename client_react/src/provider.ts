@@ -1,11 +1,11 @@
+import { Socket } from "@topical/core";
 import {
   createContext,
   createElement,
-  ReactNode,
+  type ReactNode,
   useEffect,
   useState,
 } from "react";
-import { Socket } from "@topical/core";
 
 export const Context = createContext<Socket | undefined>(undefined);
 
