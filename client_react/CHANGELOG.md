@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.4
+
+### Improvements
+
+- Updates peer dependency to support React 19.
+
 ## 0.3.3
 
 ### Features
