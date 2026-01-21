@@ -10,7 +10,8 @@ defmodule Topical.Topic.Server do
   @doc """
   Invoked to check whether a client is authorized to access this topic.
 
-  `params` are the values associated with the placeholders in the route.
+  `params` are the values associated with the placeholders in the route,
+  merged with the request params (with defaults applied).
   `context` is the context established during the WebSocket connection.
 
   Return `:ok` to allow access, or `{:error, reason}` to deny.
@@ -22,9 +23,10 @@ defmodule Topical.Topic.Server do
   @doc """
   Invoked when the topic is started to get the initial state.
 
-  `params` are the values associated with the placeholders in the route.
+  `params` are the values associated with the placeholders in the route,
+  merged with the request params (with defaults applied).
   """
-  @callback init(params :: [...]) :: {:ok, %Topic{}} | {:error, reason :: any}
+  @callback init(params :: keyword()) :: {:ok, %Topic{}} | {:error, reason :: any}
 
   @doc """
   Invoked before a client subscribes (but after initialisation).

@@ -2,6 +2,7 @@ defmodule Topical.Adapters.Base.WebSocket do
   @moduledoc false
 
   alias Topical.Protocol.{Request, Response}
+  alias Topical.Registry
 
   def init(opts, init_arg \\ nil) do
     registry = Keyword.fetch!(opts, :registry)
@@ -14,7 +15,9 @@ defmodule Topical.Adapters.Base.WebSocket do
           registry: registry,
           context: context,
           channels: %{},
-          channel_ids: %{}
+          channel_ids: %{},
+          # Maps normalized topic key -> channel_id for alias detection
+          topic_keys: %{}
         }
 
         {:ok, state}
@@ -23,14 +26,14 @@ defmodule Topical.Adapters.Base.WebSocket do
 
   def handle_text(text, state) do
     case Request.decode(text) do
-      {:ok, :notify, topic, action, args} ->
-        handle_notify(topic, action, args, state)
+      {:ok, :notify, topic, action, args, params} ->
+        handle_notify(topic, action, args, params, state)
 
-      {:ok, :execute, channel_id, topic, action, args} ->
-        handle_execute(channel_id, topic, action, args, state)
+      {:ok, :execute, channel_id, topic, action, args, params} ->
+        handle_execute(channel_id, topic, action, args, params, state)
 
-      {:ok, :subscribe, channel_id, topic} ->
-        handle_subscribe(channel_id, topic, state)
+      {:ok, :subscribe, channel_id, topic, params} ->
+        handle_subscribe(channel_id, topic, params, state)
 
       {:ok, :unsubscribe, channel_id} ->
         handle_unsubscribe(channel_id, state)
@@ -62,17 +65,24 @@ defmodule Topical.Adapters.Base.WebSocket do
     end
   end
 
-  defp handle_notify(topic, action, args, state) do
+  defp handle_notify(topic, action, args, params, state) do
     # TODO: handle some errors (e.g., with lookup/init topic?)
-    case Topical.notify(state.registry, topic, action, List.to_tuple(args), state.context) do
+    case Topical.notify(state.registry, topic, action, List.to_tuple(args), state.context, params) do
       :ok ->
         {:ok, [], state}
     end
   end
 
-  defp handle_execute(channel_id, topic, action, args, state) do
+  defp handle_execute(channel_id, topic, action, args, params, state) do
     # TODO: don't block?
-    case Topical.execute(state.registry, topic, action, List.to_tuple(args), state.context) do
+    case Topical.execute(
+           state.registry,
+           topic,
+           action,
+           List.to_tuple(args),
+           state.context,
+           params
+         ) do
       {:ok, result} ->
         {:ok, [Response.encode_result(channel_id, result)], state}
 
@@ -81,13 +91,35 @@ defmodule Topical.Adapters.Base.WebSocket do
     end
   end
 
-  defp handle_subscribe(channel_id, topic, state) do
-    case Topical.subscribe(state.registry, topic, self(), state.context) do
-      {:ok, ref} ->
+  defp handle_subscribe(channel_id, topic, params, state) do
+    # Resolve topic once - use for both alias detection and subscribing
+    case Registry.resolve_topic(state.registry, topic, params) do
+      {:ok, module, all_params, topic_key} ->
+        case Map.fetch(state.topic_keys, topic_key) do
+          {:ok, existing_channel_id} ->
+            # Already subscribed to this topic - send alias response
+            {:ok, [Response.encode_topic_alias(channel_id, existing_channel_id)], state}
+
+          :error ->
+            # New subscription
+            do_subscribe(channel_id, module, all_params, topic_key, state)
+        end
+
+      {:error, error} ->
+        {:ok, [Response.encode_error(channel_id, error)], state}
+    end
+  end
+
+  defp do_subscribe(channel_id, module, all_params, topic_key, state) do
+    case Registry.get_topic(state.registry, module, all_params, topic_key, state.context) do
+      {:ok, server} ->
+        ref = GenServer.call(server, {:subscribe, self(), state.context})
+
         state =
           state
-          |> put_in([:channels, channel_id], {topic, ref})
+          |> put_in([:channels, channel_id], {server, ref, topic_key})
           |> put_in([:channel_ids, ref], channel_id)
+          |> put_in([:topic_keys, topic_key], channel_id)
 
         {:ok, [], state}
 
@@ -98,14 +130,19 @@ defmodule Topical.Adapters.Base.WebSocket do
 
   defp handle_unsubscribe(channel_id, state) do
     case Map.fetch(state.channels, channel_id) do
-      {:ok, {topic, ref}} ->
-        :ok = Topical.unsubscribe(state.registry, topic, ref)
+      {:ok, {server, ref, topic_key}} ->
+        Topical.unsubscribe(server, ref)
 
         state =
           state
           |> Map.update!(:channels, &Map.delete(&1, channel_id))
           |> Map.update!(:channel_ids, &Map.delete(&1, ref))
+          |> Map.update!(:topic_keys, &Map.delete(&1, topic_key))
 
+        {:ok, [], state}
+
+      :error ->
+        # Channel not found (maybe it was an alias that was never stored)
         {:ok, [], state}
     end
   end

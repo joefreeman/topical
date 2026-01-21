@@ -75,51 +75,23 @@ defmodule Topical.Registry do
   end
 
   @doc """
-  Looks up an existing topic without starting it.
+  Resolves a route and normalizes request params.
 
-  Returns `{:ok, pid}` if the topic is running, or `{:error, :not_running}` if not.
+  Returns `{:ok, module, all_params, topic_key}` or `{:error, reason}`.
+
+  The returned values can be passed to `get_topic/4` to avoid resolving twice.
   """
-  def lookup_topic(name, route) do
+  def resolve_topic(name, route, request_params \\ %{}) do
     {registry_name, _supervisor_name} = resolve_names(name)
-
-    case Registry.lookup(registry_name, route) do
-      [{pid, _}] -> {:ok, pid}
-      [] -> {:error, :not_running}
-    end
-  end
-
-  @doc """
-  Gets or starts a topic, after checking authorization.
-
-  Returns `{:ok, pid}` if authorized and the topic is running (or was started),
-  or `{:error, reason}` if authorization fails or the topic cannot be started.
-  """
-  def get_topic(name, route, context) do
-    {registry_name, supervisor_name} = resolve_names(name)
     {:ok, routes} = Registry.meta(registry_name, :routes)
 
     case resolve_route(route, routes) do
-      {module, params} ->
-        case module.authorize(params, context) do
-          :ok ->
-            case Registry.lookup(registry_name, route) do
-              [{pid, _}] ->
-                {:ok, pid}
-
-              [] ->
-                spec =
-                  {Topical.Topic.Server,
-                   name: {:via, Registry, {registry_name, route}},
-                   id: route,
-                   module: module,
-                   init_arg: params}
-
-                case DynamicSupervisor.start_child(supervisor_name, spec) do
-                  {:ok, pid} -> {:ok, pid}
-                  {:error, {:already_started, pid}} -> {:ok, pid}
-                  {:error, reason} -> {:error, reason}
-                end
-            end
+      {module, route_params} ->
+        case normalize_params(request_params, module.params()) do
+          {:ok, normalized_params} ->
+            topic_key = {route, normalized_params}
+            all_params = Keyword.merge(route_params, normalized_params)
+            {:ok, module, all_params, topic_key}
 
           {:error, reason} ->
             {:error, reason}
@@ -127,6 +99,72 @@ defmodule Topical.Registry do
 
       nil ->
         {:error, :not_found}
+    end
+  end
+
+  @doc """
+  Gets or starts a topic, after checking authorization.
+
+  Accepts the resolved values from `resolve_topic/3`.
+
+  Returns `{:ok, pid}` if authorized and the topic is running (or was started),
+  or `{:error, reason}` if authorization fails or the topic cannot be started.
+  """
+  def get_topic(name, module, all_params, topic_key, context) do
+    {registry_name, supervisor_name} = resolve_names(name)
+
+    case module.authorize(all_params, context) do
+      :ok ->
+        case Registry.lookup(registry_name, topic_key) do
+          [{pid, _}] ->
+            {:ok, pid}
+
+          [] ->
+            spec =
+              {Topical.Topic.Server,
+               name: {:via, Registry, {registry_name, topic_key}},
+               id: topic_key,
+               module: module,
+               init_arg: all_params}
+
+            case DynamicSupervisor.start_child(supervisor_name, spec) do
+              {:ok, pid} -> {:ok, pid}
+              {:error, {:already_started, pid}} -> {:ok, pid}
+              {:error, reason} -> {:error, reason}
+            end
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  # Normalizes request params against declared params:
+  # - Filters to only declared param names (ignores unknown params)
+  # - Converts string keys to atoms (safe because we only use declared names)
+  # - Normalizes empty strings to nil
+  # - Applies default values for missing params
+  # - Returns {:ok, sorted_keyword_list} or {:error, {:invalid_param, name}}
+  defp normalize_params(request_params, declared_params) do
+    declared_params
+    |> Enum.reduce_while({:ok, []}, fn {name, default}, {:ok, acc} ->
+      # Try both atom and string key
+      value =
+        case Map.get(request_params, name) do
+          nil -> Map.get(request_params, Atom.to_string(name))
+          v -> v
+        end
+
+      case value do
+        nil -> {:cont, {:ok, [{name, default} | acc]}}
+        "" -> {:cont, {:ok, [{name, default} | acc]}}
+        v when is_binary(v) -> {:cont, {:ok, [{name, v} | acc]}}
+        _ -> {:halt, {:error, {:invalid_param, name}}}
+      end
+    end)
+    |> case do
+      {:ok, params} -> {:ok, Enum.sort_by(params, fn {name, _} -> name end)}
+      {:error, reason} -> {:error, reason}
     end
   end
 
