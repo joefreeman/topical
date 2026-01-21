@@ -1,0 +1,93 @@
+name: CI (@topical/core)
+
+on:
+  push:
+    branches: [main]
+    tags: ["client_js/v*"]
+    paths:
+      - "client_js/**"
+      - ".github/workflows/client_js.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "client_js/**"
+      - ".github/workflows/client_js.yml"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client_js
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: client_js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check
+        run: npm run check
+
+  release:
+    name: Release to npm
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/client_js/v')
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: release-client-js
+      cancel-in-progress: false
+
+    permissions:
+      contents: write
+      id-token: write
+
+    defaults:
+      run:
+        working-directory: client_js
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+          cache-dependency-path: client_js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/client_js/v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "Tag version: $TAG_VERSION"
+          echo "package.json version: $PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Publish to npm
+        run: npm publish
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
