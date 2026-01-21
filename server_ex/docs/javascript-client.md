@@ -18,26 +18,61 @@ type ListModel = {
 // Setup the socket
 const socket = new Socket("ws://example.com/socket");
 
-// Subscribe to a topic (returns a function to unsibscribe)
+// Subscribe to a topic (returns a function to unsubscribe)
 const unsubscribe = socket.subscribe<ListModel>(
   ["lists", "foo"],
-  (list: ListModel) => { console.log(value); },
+  (list: ListModel) => { console.log(list); },
   (error) => { ... }
 );
 
-// Execute an action
-const itemId = await socket.execute(["lists", "foo"], "add_item", "First item");
+// Execute an action (args is an array)
+const itemId = await socket.execute(["lists", "foo"], "add_item", ["First item"]);
 
 // (The subscription should have been updated)
 
-// Send a notification
-socket.notify(["lists", "foo"], "update_item", itemId, "Inaugural item")
+// Send a notification (args is an array)
+socket.notify(["lists", "foo"], "update_item", [itemId, "Inaugural item"]);
 
 // (The subscription should have been updated again)
 
 // Unsubscribe
 unsubscribe();
 ```
+
+## Parameters
+
+Topics can declare optional parameters. For `subscribe`, pass params after the topic and
+before the callbacks. For `execute` and `notify`, pass params as the last argument:
+
+```typescript
+// Subscribe to a regional leaderboard (params before callbacks)
+const unsubscribe = socket.subscribe<Leaderboard>(
+  ["leaderboards", "chess"],
+  { region: "eu" },  // params
+  (leaderboard) => { console.log(leaderboard); },
+  (error) => { ... }
+);
+
+// Execute with params (params at end)
+await socket.execute(
+  ["leaderboards", "chess"],
+  "add_score",
+  ["alice", 100],   // args array
+  { region: "eu" }  // params
+);
+
+// Notify with params (params at end)
+socket.notify(
+  ["leaderboards", "chess"],
+  "add_score",
+  ["bob", 200],     // args array
+  { region: "eu" }  // params
+);
+```
+
+Different param values create separate topic instances. The server handles deduplication
+automatically - if you subscribe to the same topic with equivalent params multiple times,
+the client will receive an alias response and merge the subscriptions.
 
 ## React client
 
