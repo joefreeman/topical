@@ -1,17 +1,17 @@
-name: Client (JavaScript)
+name: Client (React)
 
 on:
   push:
     branches: [main]
-    tags: ["client_js/v*"]
+    tags: ["client_react/v*"]
     paths:
-      - "client_js/**"
-      - ".github/workflows/client_js.yml"
+      - "client_react/**"
+      - ".github/workflows/client_react.yml"
   pull_request:
     branches: [main]
     paths:
-      - "client_js/**"
-      - ".github/workflows/client_js.yml"
+      - "client_react/**"
+      - ".github/workflows/client_react.yml"
 
 jobs:
   test:
@@ -20,7 +20,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: client_js
+        working-directory: client_react
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          cache-dependency-path: client_js/package-lock.json
+          cache-dependency-path: client_react/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -44,11 +44,11 @@ jobs:
   release:
     name: Release to npm
     needs: test
-    if: startsWith(github.ref, 'refs/tags/client_js/v')
+    if: startsWith(github.ref, 'refs/tags/client_react/v')
     runs-on: ubuntu-latest
 
     concurrency:
-      group: release-client-js
+      group: release-client-react
       cancel-in-progress: false
 
     permissions:
@@ -57,7 +57,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: client_js
+        working-directory: client_react
 
     steps:
       - uses: actions/checkout@v4
@@ -68,14 +68,14 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-          cache-dependency-path: client_js/package-lock.json
+          cache-dependency-path: client_react/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Verify tag matches package.json version
         run: |
-          TAG_VERSION="${GITHUB_REF#refs/tags/client_js/v}"
+          TAG_VERSION="${GITHUB_REF#refs/tags/client_react/v}"
           PKG_VERSION=$(node -p "require('./package.json').version")
           echo "Tag version: $TAG_VERSION"
           echo "package.json version: $PKG_VERSION"
