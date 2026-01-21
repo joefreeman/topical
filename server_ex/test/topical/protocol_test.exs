@@ -7,19 +7,40 @@ defmodule Topical.ProtocolTest do
     test "decodes notify request" do
       json = Jason.encode!([0, ["lists", "1"], "add", ["test"]])
 
-      assert {:ok, :notify, ["lists", "1"], "add", ["test"]} = Request.decode(json)
+      assert {:ok, :notify, ["lists", "1"], "add", ["test"], %{}} = Request.decode(json)
+    end
+
+    test "decodes notify request with params" do
+      json = Jason.encode!([0, ["lists", "1"], "add", ["test"], %{"layer" => "bg"}])
+
+      assert {:ok, :notify, ["lists", "1"], "add", ["test"], %{"layer" => "bg"}} =
+               Request.decode(json)
     end
 
     test "decodes execute request" do
       json = Jason.encode!([1, "ch1", ["counters", "1"], "increment", []])
 
-      assert {:ok, :execute, "ch1", ["counters", "1"], "increment", []} = Request.decode(json)
+      assert {:ok, :execute, "ch1", ["counters", "1"], "increment", [], %{}} =
+               Request.decode(json)
+    end
+
+    test "decodes execute request with params" do
+      json = Jason.encode!([1, "ch1", ["counters", "1"], "increment", [], %{"ns" => "test"}])
+
+      assert {:ok, :execute, "ch1", ["counters", "1"], "increment", [], %{"ns" => "test"}} =
+               Request.decode(json)
     end
 
     test "decodes subscribe request" do
       json = Jason.encode!([2, "ch1", ["lists", "abc"]])
 
-      assert {:ok, :subscribe, "ch1", ["lists", "abc"]} = Request.decode(json)
+      assert {:ok, :subscribe, "ch1", ["lists", "abc"], %{}} = Request.decode(json)
+    end
+
+    test "decodes subscribe request with params" do
+      json = Jason.encode!([2, "ch1", ["lists", "abc"], %{"layer" => "fg"}])
+
+      assert {:ok, :subscribe, "ch1", ["lists", "abc"], %{"layer" => "fg"}} = Request.decode(json)
     end
 
     test "decodes unsubscribe request" do
@@ -54,19 +75,19 @@ defmodule Topical.ProtocolTest do
       args = %{"name" => "Test", "items" => [1, 2, 3]}
       json = Jason.encode!([0, ["topic"], "action", args])
 
-      assert {:ok, :notify, ["topic"], "action", ^args} = Request.decode(json)
+      assert {:ok, :notify, ["topic"], "action", ^args, %{}} = Request.decode(json)
     end
 
     test "decodes execute with string channel_id" do
       json = Jason.encode!([1, "channel-123", ["topic"], "action", []])
 
-      assert {:ok, :execute, "channel-123", ["topic"], "action", []} = Request.decode(json)
+      assert {:ok, :execute, "channel-123", ["topic"], "action", [], %{}} = Request.decode(json)
     end
 
     test "decodes execute with integer channel_id" do
       json = Jason.encode!([1, 42, ["topic"], "action", []])
 
-      assert {:ok, :execute, 42, ["topic"], "action", []} = Request.decode(json)
+      assert {:ok, :execute, 42, ["topic"], "action", [], %{}} = Request.decode(json)
     end
   end
 

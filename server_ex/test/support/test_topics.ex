@@ -243,3 +243,88 @@ defmodule Topical.Test.MergeTopic do
     {:ok, :ok, topic}
   end
 end
+
+defmodule Topical.Test.LeaderboardTopic do
+  @moduledoc """
+  Leaderboard topic for testing params feature.
+  Route: ["leaderboards", :game_id]
+  Params: [region: "global"]
+
+  Different regions have separate leaderboards - global vs regional rankings.
+  """
+  use Topical.Topic, route: ["leaderboards", :game_id], params: [region: "global"]
+
+  def init(params) do
+    game_id = Keyword.fetch!(params, :game_id)
+    region = Keyword.fetch!(params, :region)
+
+    value = %{
+      game_id: game_id,
+      region: region,
+      entries: []
+    }
+
+    {:ok, Topic.new(value)}
+  end
+
+  def handle_execute("get_info", {}, topic, _context) do
+    result = %{
+      game_id: topic.value.game_id,
+      region: topic.value.region
+    }
+
+    {:ok, result, topic}
+  end
+
+  def handle_execute("add_score", {player, score}, topic, _context) do
+    entry = %{player: player, score: score}
+    topic = Topic.insert(topic, [:entries], entry)
+    {:ok, :ok, topic}
+  end
+
+  def handle_notify("add_score", {player, score}, topic, _context) do
+    entry = %{player: player, score: score}
+    topic = Topic.insert(topic, [:entries], entry)
+    {:ok, topic}
+  end
+end
+
+defmodule Topical.Test.DocumentTopic do
+  @moduledoc """
+  Document topic for testing authorization with params.
+  Route: ["documents", :doc_id]
+  Params: [mode: "view"]
+
+  Viewing a document is allowed for anyone, but editing requires :can_edit permission.
+  """
+  use Topical.Topic, route: ["documents", :doc_id], params: [mode: "view"]
+
+  def authorize(params, context) do
+    mode = Keyword.fetch!(params, :mode)
+
+    cond do
+      mode == "edit" and context[:can_edit] != true ->
+        {:error, :edit_not_allowed}
+
+      true ->
+        :ok
+    end
+  end
+
+  def init(params) do
+    doc_id = Keyword.fetch!(params, :doc_id)
+    mode = Keyword.fetch!(params, :mode)
+
+    value = %{doc_id: doc_id, mode: mode, content: ""}
+    {:ok, Topic.new(value)}
+  end
+
+  def handle_execute("get_mode", {}, topic, _context) do
+    {:ok, topic.value.mode, topic}
+  end
+
+  def handle_execute("set_content", {content}, topic, _context) do
+    topic = Topic.set(topic, [:content], content)
+    {:ok, :ok, topic}
+  end
+end
