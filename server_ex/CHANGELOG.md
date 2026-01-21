@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 0.3.0
+
+### Featuyres
+
+- Adds support for topics to have optional parameters (with defaults; in addition to required route parameters).
+
+### Improvements
+
+- Updates `subscribe`/`unsubscribe` to avoid unnecessarily initialising topic to unsubscribe.
+
 ## 0.2.4
 
 ### Features
