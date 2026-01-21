@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext } from "react";
-import { Socket, SocketState } from "@topical/core";
+import type { Socket, SocketState } from "@topical/core";
+import { useContext, useEffect, useState } from "react";
 
 import { Context } from "./provider";
 
