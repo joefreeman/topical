@@ -1,6 +1,6 @@
 {
   "name": "@topical/react",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "React Topical client.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -25,11 +25,11 @@
     "dist"
   ],
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0 || ^19.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.11",
-    "@types/react": "^18.0.26",
+    "@types/react": "^18.0.26 || ^19.0.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
