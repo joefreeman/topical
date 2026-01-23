@@ -41,7 +41,7 @@ defmodule Topical do
   ## Options
 
     * `params` - Optional map of params to pass to the topic (default: `%{}`).
-      These are merged with route params and passed to `init/1` and `authorize/2`.
+      These are merged with route params and passed to `connect/2` and `init/1`.
       Topics with different param values are separate instances and do not share state.
 
   ## Example
@@ -51,8 +51,9 @@ defmodule Topical do
 
   """
   def subscribe(registry, topic, pid, context \\ nil, params \\ %{}) do
-    with {:ok, module, all_params, topic_key} <- Registry.resolve_topic(registry, topic, params),
-         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key, context) do
+    with {:ok, module, all_params, topic_key} <-
+           Registry.resolve_topic(registry, topic, context, params),
+         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key) do
       # TODO: monitor/link server?
       ref = GenServer.call(server, {:subscribe, pid, context})
       {:ok, ref, server}
@@ -87,8 +88,9 @@ defmodule Topical do
       # => {:ok, %{items: %{}, order: []}}
   """
   def capture(registry, topic, context \\ nil, params \\ %{}) do
-    with {:ok, module, all_params, topic_key} <- Registry.resolve_topic(registry, topic, params),
-         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key, context) do
+    with {:ok, module, all_params, topic_key} <-
+           Registry.resolve_topic(registry, topic, context, params),
+         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key) do
       {:ok, GenServer.call(server, {:capture, context})}
     end
   end
@@ -107,8 +109,9 @@ defmodule Topical do
 
   """
   def execute(registry, topic, action, args \\ {}, context \\ nil, params \\ %{}) do
-    with {:ok, module, all_params, topic_key} <- Registry.resolve_topic(registry, topic, params),
-         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key, context) do
+    with {:ok, module, all_params, topic_key} <-
+           Registry.resolve_topic(registry, topic, context, params),
+         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key) do
       {:ok, GenServer.call(server, {:execute, action, args, context})}
     end
   end
@@ -129,8 +132,9 @@ defmodule Topical do
 
   """
   def notify(registry, topic, action, args \\ {}, context \\ nil, params \\ %{}) do
-    with {:ok, module, all_params, topic_key} <- Registry.resolve_topic(registry, topic, params),
-         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key, context) do
+    with {:ok, module, all_params, topic_key} <-
+           Registry.resolve_topic(registry, topic, context, params),
+         {:ok, server} <- Registry.get_topic(registry, module, all_params, topic_key) do
       GenServer.cast(server, {:notify, action, args, context})
     end
   end

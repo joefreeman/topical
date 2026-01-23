@@ -75,13 +75,17 @@ defmodule Topical.Registry do
   end
 
   @doc """
-  Resolves a route and normalizes request params.
+  Resolves a route, calls connect, and computes the topic key.
 
-  Returns `{:ok, module, all_params, topic_key}` or `{:error, reason}`.
+  Returns `{:ok, module, final_params, topic_key}` or `{:error, reason}`.
 
   The returned values can be passed to `get_topic/4` to avoid resolving twice.
+
+  The `connect/2` callback is called with the merged params and context, and may
+  return modified params. The topic key is computed from the final params
+  (excluding route params, which are implicit in the route).
   """
-  def resolve_topic(name, route, request_params \\ %{}) do
+  def resolve_topic(name, route, context, request_params \\ %{}) do
     {registry_name, _supervisor_name} = resolve_names(name)
     {:ok, routes} = Registry.meta(registry_name, :routes)
 
@@ -89,9 +93,18 @@ defmodule Topical.Registry do
       {module, route_params} ->
         case normalize_params(request_params, module.params()) do
           {:ok, normalized_params} ->
-            topic_key = {route, normalized_params}
             all_params = Keyword.merge(route_params, normalized_params)
-            {:ok, module, all_params, topic_key}
+
+            case module.connect(all_params, context) do
+              {:ok, final_params} ->
+                # Topic key is route + non-route params (route params are implicit in the route)
+                non_route_params = Keyword.drop(final_params, Keyword.keys(route_params))
+                topic_key = {route, non_route_params}
+                {:ok, module, final_params, topic_key}
+
+              {:error, reason} ->
+                {:error, reason}
+            end
 
           {:error, reason} ->
             {:error, reason}
@@ -103,39 +116,34 @@ defmodule Topical.Registry do
   end
 
   @doc """
-  Gets or starts a topic, after checking authorization.
+  Gets or starts a topic.
 
-  Accepts the resolved values from `resolve_topic/3`.
+  Accepts the resolved values from `resolve_topic/4`. Authorization has already
+  been checked by `resolve_topic/4` via the `connect/2` callback.
 
-  Returns `{:ok, pid}` if authorized and the topic is running (or was started),
-  or `{:error, reason}` if authorization fails or the topic cannot be started.
+  Returns `{:ok, pid}` if the topic is running (or was started),
+  or `{:error, reason}` if the topic cannot be started.
   """
-  def get_topic(name, module, all_params, topic_key, context) do
+  def get_topic(name, module, all_params, topic_key) do
     {registry_name, supervisor_name} = resolve_names(name)
 
-    case module.authorize(all_params, context) do
-      :ok ->
-        case Registry.lookup(registry_name, topic_key) do
-          [{pid, _}] ->
-            {:ok, pid}
+    case Registry.lookup(registry_name, topic_key) do
+      [{pid, _}] ->
+        {:ok, pid}
 
-          [] ->
-            spec =
-              {Topical.Topic.Server,
-               name: {:via, Registry, {registry_name, topic_key}},
-               id: topic_key,
-               module: module,
-               init_arg: all_params}
+      [] ->
+        spec =
+          {Topical.Topic.Server,
+           name: {:via, Registry, {registry_name, topic_key}},
+           id: topic_key,
+           module: module,
+           init_arg: all_params}
 
-            case DynamicSupervisor.start_child(supervisor_name, spec) do
-              {:ok, pid} -> {:ok, pid}
-              {:error, {:already_started, pid}} -> {:ok, pid}
-              {:error, reason} -> {:error, reason}
-            end
+        case DynamicSupervisor.start_child(supervisor_name, spec) do
+          {:ok, pid} -> {:ok, pid}
+          {:error, {:already_started, pid}} -> {:ok, pid}
+          {:error, reason} -> {:error, reason}
         end
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 

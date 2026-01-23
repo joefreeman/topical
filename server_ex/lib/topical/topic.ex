@@ -101,8 +101,17 @@ defmodule Topical.Topic do
         unquote(Keyword.get(opts, :params, []))
       end
 
+      @doc false
+      @deprecated "Use connect/2 instead"
       def authorize(_params, _context) do
         :ok
+      end
+
+      def connect(params, context) do
+        case authorize(params, context) do
+          :ok -> {:ok, params}
+          {:error, reason} -> {:error, reason}
+        end
       end
 
       def handle_subscribe(topic, _context) do
@@ -135,6 +144,7 @@ defmodule Topical.Topic do
       end
 
       defoverridable authorize: 2,
+                     connect: 2,
                      handle_subscribe: 2,
                      handle_unsubscribe: 2,
                      handle_capture: 2,

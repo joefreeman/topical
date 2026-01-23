@@ -7,8 +7,9 @@ defmodule Topical.RegistryTest do
 
   # Helper to resolve and get topic in one call (for test convenience)
   defp resolve_and_get_topic(registry, route, context, params \\ %{}) do
-    with {:ok, module, all_params, topic_key} <- Registry.resolve_topic(registry, route, params) do
-      Registry.get_topic(registry, module, all_params, topic_key, context)
+    with {:ok, module, all_params, topic_key} <-
+           Registry.resolve_topic(registry, route, context, params) do
+      Registry.get_topic(registry, module, all_params, topic_key)
     end
   end
 
@@ -59,15 +60,16 @@ defmodule Topical.RegistryTest do
     end
 
     test "returns {:error, :not_found} for unknown route", %{registry: registry} do
-      assert {:error, :not_found} = Registry.resolve_topic(registry, ["unknown", "route"])
+      assert {:error, :not_found} = Registry.resolve_topic(registry, ["unknown", "route"], nil)
     end
 
     test "returns {:error, :not_found} for partial route match", %{registry: registry} do
-      assert {:error, :not_found} = Registry.resolve_topic(registry, ["counters"])
+      assert {:error, :not_found} = Registry.resolve_topic(registry, ["counters"], nil)
     end
 
     test "returns {:error, :not_found} for too long route", %{registry: registry} do
-      assert {:error, :not_found} = Registry.resolve_topic(registry, ["counters", "1", "extra"])
+      assert {:error, :not_found} =
+               Registry.resolve_topic(registry, ["counters", "1", "extra"], nil)
     end
 
     test "passes params to topic init", %{registry: registry} do
