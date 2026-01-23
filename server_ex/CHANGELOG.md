@@ -1,8 +1,19 @@
 # CHANGELOG
 
+## 0.3.1
+
+### Breaking changes
+
+- The `authorize/2` callback is deprecated in favor of `connect/2`, which can both authorize access and modify params.
+- Params passed to callbacks (`connect/2`, `init/1`) are now maps instead of keyword lists.
+
+### Fixes
+
+- Different route formats (`["foo", "bar"]` vs `"foo/bar"`) now correctly resolve to the same topic instance.
+
 ## 0.3.0
 
-### Featuyres
+### Features
 
 - Adds support for topics to have optional parameters (with defaults; in addition to required route parameters).
 

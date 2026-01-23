@@ -10,7 +10,7 @@ defmodule MyApp.Topics.List do
 
   # Initialise the topic
   def init(params) do
-    list_id = Keyword.fetch!(params, :list_id)
+    list_id = Map.fetch!(params, :list_id)
 
     value = %{items: %{}, order: []} # exposed 'value' of the topic
     state = %{list_id: list_id, last_item_id: 0} # hidden server state
@@ -55,19 +55,20 @@ end
 
 ## Authorization
 
-You can control access to topics by implementing the `authorize/2` callback. This is called
+You can control access to topics by implementing the `connect/2` callback. This is called
 before a topic is accessed (via subscribe, execute, notify, or capture). The callback receives
-the route params and the context (established during WebSocket connection):
+the params (a map containing route params and any declared params) and the context
+(established during WebSocket connection):
 
 ```elixir
 defmodule MyApp.Topics.PrivateList do
   use Topical.Topic, route: ["lists", :list_id]
 
-  def authorize(params, context) do
-    list_id = Keyword.fetch!(params, :list_id)
+  def connect(params, context) do
+    list_id = Map.fetch!(params, :list_id)
 
     if can_access_list?(context.user_id, list_id) do
-      :ok
+      {:ok, params}
     else
       {:error, :forbidden}
     end
@@ -77,8 +78,20 @@ defmodule MyApp.Topics.PrivateList do
 end
 ```
 
-Return `:ok` to allow access, or `{:error, reason}` to deny. The default implementation
-allows all access.
+Return `{:ok, params}` to allow access, or `{:error, reason}` to deny. The default
+implementation allows all access.
+
+The `connect/2` callback can also modify params, which is useful for incorporating
+context values (like user_id from authentication) into topic params:
+
+```elixir
+def connect(params, context) do
+  {:ok, Map.put(params, :user_id, context.user_id)}
+end
+```
+
+Modified params affect topic identity - topics with different param values are separate
+instances. This enables per-user or per-tenant topics.
 
 ## Parameters
 
@@ -90,8 +103,8 @@ defmodule MyApp.Topics.Leaderboard do
   use Topical.Topic, route: ["leaderboards", :game_id], params: [region: "global"]
 
   def init(params) do
-    game_id = Keyword.fetch!(params, :game_id)
-    region = Keyword.fetch!(params, :region)
+    game_id = Map.fetch!(params, :game_id)
+    region = Map.fetch!(params, :region)
 
     {:ok, Topic.new(%{game_id: game_id, region: region, entries: []})}
   end
@@ -108,7 +121,7 @@ Topical.subscribe(MyApp.Topical, ["leaderboards", "chess"], self())
 Topical.subscribe(MyApp.Topical, ["leaderboards", "chess"], self(), nil, %{"region" => "eu"})
 ```
 
-Parameters are also available in `authorize/2` for access control based on param values.
+Parameters are also available in `connect/2` for access control based on param values.
 
 ## Supervision
 

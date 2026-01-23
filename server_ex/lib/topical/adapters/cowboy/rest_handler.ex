@@ -43,6 +43,12 @@ defmodule Topical.Adapters.Cowboy.RestHandler do
 
           {:error, :not_found} ->
             {:ok, error_response(req, 404, "not_found"), opts}
+
+          {:error, :unauthorized} ->
+            {:ok, error_response(req, 403, "unauthorized"), opts}
+
+          {:error, error} ->
+            {:ok, error_response(req, 400, error), opts}
         end
     end
   end

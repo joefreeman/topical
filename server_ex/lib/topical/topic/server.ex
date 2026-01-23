@@ -8,25 +8,50 @@ defmodule Topical.Topic.Server do
   """
 
   @doc """
-  Invoked to check whether a client is authorized to access this topic.
+  Invoked when a client connects to this topic.
 
-  `params` are the values associated with the placeholders in the route,
-  merged with the request params (with defaults applied).
+  `params` is a map containing the values associated with the placeholders in
+  the route, merged with the request params (with defaults applied).
   `context` is the context established during the WebSocket connection.
+
+  Return `{:ok, params}` to allow access (optionally with modified params),
+  or `{:error, reason}` to deny. Modified params will affect topic identity -
+  topics with different param values are separate instances.
+
+  This is useful for incorporating context values (like user_id from auth)
+  into topic params for per-user or per-tenant topics.
+
+  This callback is optional. The default implementation delegates to
+  `authorize/2` for backwards compatibility.
+
+  ## Example
+
+      def connect(params, context) do
+        {:ok, Map.put(params, :user_id, context.user_id)}
+      end
+
+  """
+  @callback connect(params :: map(), context :: any) ::
+              {:ok, params :: map()} | {:error, reason :: any}
+
+  @doc """
+  Deprecated: Use `connect/2` instead.
+
+  Invoked to check whether a client is authorized to access this topic.
 
   Return `:ok` to allow access, or `{:error, reason}` to deny.
 
   This callback is optional. The default implementation returns `:ok`.
   """
-  @callback authorize(params :: keyword(), context :: any) :: :ok | {:error, reason :: any}
+  @callback authorize(params :: map(), context :: any) :: :ok | {:error, reason :: any}
 
   @doc """
   Invoked when the topic is started to get the initial state.
 
-  `params` are the values associated with the placeholders in the route,
-  merged with the request params (with defaults applied).
+  `params` is a map containing the values associated with the placeholders in
+  the route, merged with the request params (with defaults applied).
   """
-  @callback init(params :: keyword()) :: {:ok, %Topic{}} | {:error, reason :: any}
+  @callback init(params :: map()) :: {:ok, %Topic{}} | {:error, reason :: any}
 
   @doc """
   Invoked before a client subscribes (but after initialisation).

@@ -14,7 +14,7 @@ defmodule Topical.Topic do
 
         # Initialise the topic
         def init(params) do
-          list_id = Keyword.fetch!(params, :list_id)
+          list_id = Map.fetch!(params, :list_id)
 
           value = %{items: %{}, order: []} # exposed 'value' of the topic
           state = %{list_id: list_id} # hidden server state
@@ -101,8 +101,16 @@ defmodule Topical.Topic do
         unquote(Keyword.get(opts, :params, []))
       end
 
+      @doc false
+      @deprecated "Use connect/2 instead"
       def authorize(_params, _context) do
         :ok
+      end
+
+      def connect(params, context) do
+        with :ok <- authorize(params, context) do
+          {:ok, params}
+        end
       end
 
       def handle_subscribe(topic, _context) do
@@ -135,6 +143,7 @@ defmodule Topical.Topic do
       end
 
       defoverridable authorize: 2,
+                     connect: 2,
                      handle_subscribe: 2,
                      handle_unsubscribe: 2,
                      handle_capture: 2,
