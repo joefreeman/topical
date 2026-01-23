@@ -14,7 +14,7 @@ defmodule Topical.Topic do
 
         # Initialise the topic
         def init(params) do
-          list_id = Keyword.fetch!(params, :list_id)
+          list_id = Map.fetch!(params, :list_id)
 
           value = %{items: %{}, order: []} # exposed 'value' of the topic
           state = %{list_id: list_id} # hidden server state
@@ -108,9 +108,8 @@ defmodule Topical.Topic do
       end
 
       def connect(params, context) do
-        case authorize(params, context) do
-          :ok -> {:ok, params}
-          {:error, reason} -> {:error, reason}
+        with :ok <- authorize(params, context) do
+          {:ok, params}
         end
       end
 

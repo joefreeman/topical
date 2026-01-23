@@ -7,9 +7,8 @@ defmodule Topical.RegistryTest do
 
   # Helper to resolve and get topic in one call (for test convenience)
   defp resolve_and_get_topic(registry, route, context, params \\ %{}) do
-    with {:ok, module, all_params, topic_key} <-
-           Registry.resolve_topic(registry, route, context, params) do
-      Registry.get_topic(registry, module, all_params, topic_key)
+    with {:ok, topic_key} <- Registry.resolve_topic(registry, route, context, params) do
+      Registry.get_topic(registry, topic_key)
     end
   end
 
@@ -93,6 +92,12 @@ defmodule Topical.RegistryTest do
     test "accepts string route format", %{registry: registry} do
       {:ok, pid} = resolve_and_get_topic(registry, "counters/1", nil)
       assert is_pid(pid)
+    end
+
+    test "returns same pid for list and string route formats", %{registry: registry} do
+      {:ok, pid1} = resolve_and_get_topic(registry, ["counters", "1"], nil)
+      {:ok, pid2} = resolve_and_get_topic(registry, "counters/1", nil)
+      assert pid1 == pid2
     end
 
     test "accepts URI-encoded route parts", %{registry: registry} do

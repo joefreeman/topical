@@ -57,10 +57,10 @@ defmodule Topical.Registry do
     if length(parts) == length(route) do
       parts
       |> Enum.zip(route)
-      |> Enum.reduce_while([], fn {part, route_part}, params ->
+      |> Enum.reduce_while(%{}, fn {part, route_part}, params ->
         cond do
           is_atom(route_part) ->
-            {:cont, Keyword.put(params, route_part, part)}
+            {:cont, Map.put(params, route_part, part)}
 
           part == route_part ->
             {:cont, params}
@@ -77,13 +77,11 @@ defmodule Topical.Registry do
   @doc """
   Resolves a route, calls connect, and computes the topic key.
 
-  Returns `{:ok, module, final_params, topic_key}` or `{:error, reason}`.
-
-  The returned values can be passed to `get_topic/4` to avoid resolving twice.
+  Returns `{:ok, topic_key}` or `{:error, reason}`, where `topic_key` is
+  `{module, params}` - a tuple of the topic module and a map of all params.
 
   The `connect/2` callback is called with the merged params and context, and may
-  return modified params. The topic key is computed from the final params
-  (excluding route params, which are implicit in the route).
+  return modified params. The returned params become part of the topic key.
   """
   def resolve_topic(name, route, context, request_params \\ %{}) do
     {registry_name, _supervisor_name} = resolve_names(name)
@@ -91,16 +89,12 @@ defmodule Topical.Registry do
 
     case resolve_route(route, routes) do
       {module, route_params} ->
-        case normalize_params(request_params, module.params()) do
-          {:ok, normalized_params} ->
-            all_params = Keyword.merge(route_params, normalized_params)
-
+        case normalize_params(request_params, module.params(), route_params) do
+          {:ok, all_params} ->
             case module.connect(all_params, context) do
               {:ok, final_params} ->
-                # Topic key is route + non-route params (route params are implicit in the route)
-                non_route_params = Keyword.drop(final_params, Keyword.keys(route_params))
-                topic_key = {route, non_route_params}
-                {:ok, module, final_params, topic_key}
+                topic_key = {module, final_params}
+                {:ok, topic_key}
 
               {:error, reason} ->
                 {:error, reason}
@@ -118,13 +112,14 @@ defmodule Topical.Registry do
   @doc """
   Gets or starts a topic.
 
-  Accepts the resolved values from `resolve_topic/4`. Authorization has already
+  Takes a `topic_key` from `resolve_topic/4`. Authorization has already
   been checked by `resolve_topic/4` via the `connect/2` callback.
 
   Returns `{:ok, pid}` if the topic is running (or was started),
   or `{:error, reason}` if the topic cannot be started.
   """
-  def get_topic(name, module, all_params, topic_key) do
+  def get_topic(name, topic_key) do
+    {module, params} = topic_key
     {registry_name, supervisor_name} = resolve_names(name)
 
     case Registry.lookup(registry_name, topic_key) do
@@ -137,7 +132,7 @@ defmodule Topical.Registry do
            name: {:via, Registry, {registry_name, topic_key}},
            id: topic_key,
            module: module,
-           init_arg: all_params}
+           init_arg: params}
 
         case DynamicSupervisor.start_child(supervisor_name, spec) do
           {:ok, pid} -> {:ok, pid}
@@ -147,15 +142,16 @@ defmodule Topical.Registry do
     end
   end
 
-  # Normalizes request params against declared params:
-  # - Filters to only declared param names (ignores unknown params)
+  # Builds the complete params map:
+  # - Starts with route_params (from route placeholders)
+  # - Adds declared params with defaults, overridden by request_params
+  # - Filters request params to only declared param names (ignores unknown)
   # - Converts string keys to atoms (safe because we only use declared names)
-  # - Normalizes empty strings to nil
-  # - Applies default values for missing params
-  # - Returns {:ok, sorted_keyword_list} or {:error, {:invalid_param, name}}
-  defp normalize_params(request_params, declared_params) do
+  # - Normalizes empty strings to default
+  # - Returns {:ok, map} or {:error, {:invalid_param, name}}
+  defp normalize_params(request_params, declared_params, route_params) do
     declared_params
-    |> Enum.reduce_while({:ok, []}, fn {name, default}, {:ok, acc} ->
+    |> Enum.reduce_while({:ok, route_params}, fn {name, default}, {:ok, acc} ->
       # Try both atom and string key
       value =
         case Map.get(request_params, name) do
@@ -164,16 +160,12 @@ defmodule Topical.Registry do
         end
 
       case value do
-        nil -> {:cont, {:ok, [{name, default} | acc]}}
-        "" -> {:cont, {:ok, [{name, default} | acc]}}
-        v when is_binary(v) -> {:cont, {:ok, [{name, v} | acc]}}
+        nil -> {:cont, {:ok, Map.put(acc, name, default)}}
+        "" -> {:cont, {:ok, Map.put(acc, name, default)}}
+        v when is_binary(v) -> {:cont, {:ok, Map.put(acc, name, v)}}
         _ -> {:halt, {:error, {:invalid_param, name}}}
       end
     end)
-    |> case do
-      {:ok, params} -> {:ok, Enum.sort_by(params, fn {name, _} -> name end)}
-      {:error, reason} -> {:error, reason}
-    end
   end
 
   defp resolve_names(name) when is_atom(name) do

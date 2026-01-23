@@ -94,7 +94,7 @@ defmodule Topical.Adapters.Base.WebSocket do
   defp handle_subscribe(channel_id, topic, params, state) do
     # Resolve topic once - use for both alias detection and subscribing
     case Registry.resolve_topic(state.registry, topic, state.context, params) do
-      {:ok, module, all_params, topic_key} ->
+      {:ok, topic_key} ->
         case Map.fetch(state.topic_keys, topic_key) do
           {:ok, existing_channel_id} ->
             # Already subscribed to this topic - send alias response
@@ -102,7 +102,7 @@ defmodule Topical.Adapters.Base.WebSocket do
 
           :error ->
             # New subscription
-            do_subscribe(channel_id, module, all_params, topic_key, state)
+            do_subscribe(channel_id, topic_key, state)
         end
 
       {:error, error} ->
@@ -110,8 +110,8 @@ defmodule Topical.Adapters.Base.WebSocket do
     end
   end
 
-  defp do_subscribe(channel_id, module, all_params, topic_key, state) do
-    case Registry.get_topic(state.registry, module, all_params, topic_key) do
+  defp do_subscribe(channel_id, topic_key, state) do
+    case Registry.get_topic(state.registry, topic_key) do
       {:ok, server} ->
         ref = GenServer.call(server, {:subscribe, self(), state.context})
 

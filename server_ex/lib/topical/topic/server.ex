@@ -10,8 +10,8 @@ defmodule Topical.Topic.Server do
   @doc """
   Invoked when a client connects to this topic.
 
-  `params` are the values associated with the placeholders in the route,
-  merged with the request params (with defaults applied).
+  `params` is a map containing the values associated with the placeholders in
+  the route, merged with the request params (with defaults applied).
   `context` is the context established during the WebSocket connection.
 
   Return `{:ok, params}` to allow access (optionally with modified params),
@@ -27,12 +27,12 @@ defmodule Topical.Topic.Server do
   ## Example
 
       def connect(params, context) do
-        {:ok, Keyword.put(params, :user_id, context.user_id)}
+        {:ok, Map.put(params, :user_id, context.user_id)}
       end
 
   """
-  @callback connect(params :: keyword(), context :: any) ::
-              {:ok, params :: keyword()} | {:error, reason :: any}
+  @callback connect(params :: map(), context :: any) ::
+              {:ok, params :: map()} | {:error, reason :: any}
 
   @doc """
   Deprecated: Use `connect/2` instead.
@@ -43,15 +43,15 @@ defmodule Topical.Topic.Server do
 
   This callback is optional. The default implementation returns `:ok`.
   """
-  @callback authorize(params :: keyword(), context :: any) :: :ok | {:error, reason :: any}
+  @callback authorize(params :: map(), context :: any) :: :ok | {:error, reason :: any}
 
   @doc """
   Invoked when the topic is started to get the initial state.
 
-  `params` are the values associated with the placeholders in the route,
-  merged with the request params (with defaults applied).
+  `params` is a map containing the values associated with the placeholders in
+  the route, merged with the request params (with defaults applied).
   """
-  @callback init(params :: keyword()) :: {:ok, %Topic{}} | {:error, reason :: any}
+  @callback init(params :: map()) :: {:ok, %Topic{}} | {:error, reason :: any}
 
   @doc """
   Invoked before a client subscribes (but after initialisation).

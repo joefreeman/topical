@@ -7,7 +7,7 @@ defmodule Topical.Test.CounterTopic do
   use Topical.Topic, route: ["counters", :id]
 
   def init(params) do
-    id = Keyword.fetch!(params, :id)
+    id = Map.fetch!(params, :id)
     value = %{count: 0}
     state = %{id: id}
     {:ok, Topic.new(value, state)}
@@ -55,7 +55,7 @@ defmodule Topical.Test.AuthorizedTopic do
   use Topical.Topic, route: ["private", :owner_id]
 
   def authorize(params, context) do
-    owner_id = Keyword.fetch!(params, :owner_id)
+    owner_id = Map.fetch!(params, :owner_id)
 
     cond do
       context == nil ->
@@ -70,7 +70,7 @@ defmodule Topical.Test.AuthorizedTopic do
   end
 
   def init(params) do
-    owner_id = Keyword.fetch!(params, :owner_id)
+    owner_id = Map.fetch!(params, :owner_id)
     value = %{owner: owner_id, data: nil}
     {:ok, Topic.new(value)}
   end
@@ -99,7 +99,7 @@ defmodule Topical.Test.CallbackTopic do
   use Topical.Topic, route: ["callbacks", :id]
 
   def init(params) do
-    id = Keyword.fetch!(params, :id)
+    id = Map.fetch!(params, :id)
     value = %{callbacks: []}
     state = %{id: id}
     {:ok, Topic.new(value, state)}
@@ -150,7 +150,7 @@ defmodule Topical.Test.FailingTopic do
   use Topical.Topic, route: ["failing", :id]
 
   def init(params) do
-    id = Keyword.fetch!(params, :id)
+    id = Map.fetch!(params, :id)
 
     case id do
       "init_error" ->
@@ -255,8 +255,8 @@ defmodule Topical.Test.LeaderboardTopic do
   use Topical.Topic, route: ["leaderboards", :game_id], params: [region: "global"]
 
   def init(params) do
-    game_id = Keyword.fetch!(params, :game_id)
-    region = Keyword.fetch!(params, :region)
+    game_id = Map.fetch!(params, :game_id)
+    region = Map.fetch!(params, :region)
 
     value = %{
       game_id: game_id,
@@ -300,7 +300,7 @@ defmodule Topical.Test.DocumentTopic do
   use Topical.Topic, route: ["documents", :doc_id], params: [mode: "view"]
 
   def authorize(params, context) do
-    mode = Keyword.fetch!(params, :mode)
+    mode = Map.fetch!(params, :mode)
 
     cond do
       mode == "edit" and context[:can_edit] != true ->
@@ -312,8 +312,8 @@ defmodule Topical.Test.DocumentTopic do
   end
 
   def init(params) do
-    doc_id = Keyword.fetch!(params, :doc_id)
-    mode = Keyword.fetch!(params, :mode)
+    doc_id = Map.fetch!(params, :doc_id)
+    mode = Map.fetch!(params, :mode)
 
     value = %{doc_id: doc_id, mode: mode, content: ""}
     {:ok, Topic.new(value)}
