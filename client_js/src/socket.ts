@@ -50,6 +50,8 @@ function topicKey(topic: string[], params: Params): string {
   return `${topic.map(encodeURIComponent).join("/")}?${sortedParams}`;
 }
 
+export type WebSocketFactory = (url: string) => WebSocket;
+
 export default class Socket {
   private socket: WebSocket;
   private closed = false;
@@ -61,15 +63,20 @@ export default class Socket {
   // Maps aliased channel IDs to their target channel IDs
   private aliases: Record<number, number> = {};
   private listeners: ((state: SocketState) => void)[] = [];
+  private createWebSocket: WebSocketFactory;
 
-  constructor(private readonly url: string) {
+  constructor(
+    private readonly url: string,
+    createWebSocket?: WebSocketFactory,
+  ) {
+    this.createWebSocket = createWebSocket ?? ((url) => new WebSocket(url));
     this.socket = this.open();
   }
 
   private open() {
     this.closed = false;
     this.setState("connecting");
-    const socket = new WebSocket(this.url);
+    const socket = this.createWebSocket(this.url);
     socket.addEventListener("open", this.handleSocketOpen);
     socket.addEventListener("error", this.handleSocketError);
     socket.addEventListener("message", this.handleSocketMessage);

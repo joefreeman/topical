@@ -1,1 +1,7 @@
-export { default as Socket, Params, ParamsInput, SocketState } from "./socket";
+export {
+  default as Socket,
+  Params,
+  ParamsInput,
+  SocketState,
+  WebSocketFactory,
+} from "./socket";
