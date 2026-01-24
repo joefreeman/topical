@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.1
+
+### Features
+
+- Adds optional `createWebSocket` factory function for customizing WebSocket creation.
+
 ## 0.3.0
 
 ### Features
