@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.5
+
+### Features
+
+- Adds optional `createWebSocket` prop to `SocketProvider` for customizing WebSocket creation.
+
 ## 0.3.4
 
 ### Improvements
