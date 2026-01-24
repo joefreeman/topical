@@ -1,4 +1,4 @@
-import { Socket, type WebSocketFactory } from "@topical/core";
+import { Socket } from "@topical/core";
 import {
   createContext,
   createElement,
@@ -11,22 +11,17 @@ export const Context = createContext<Socket | undefined>(undefined);
 
 type ProviderProps = {
   url: string;
-  createWebSocket?: WebSocketFactory;
   children: ReactNode;
 };
 
-export default function Provider({
-  url,
-  createWebSocket,
-  children,
-}: ProviderProps) {
+export default function Provider({ url, children }: ProviderProps) {
   const [socket, setSocket] = useState<Socket>();
   useEffect(() => {
-    const socket = new Socket(url, createWebSocket);
+    const socket = new Socket(url);
     setSocket(socket);
     return () => {
       socket.close();
     };
-  }, [url, createWebSocket]);
+  }, [url]);
   return createElement(Context.Provider, { value: socket }, children);
 }
