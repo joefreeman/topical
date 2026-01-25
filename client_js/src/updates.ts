@@ -83,7 +83,7 @@ export function applyUpdate<T>(current: T, update: Update): T {
     case 4: {
       const [, path, value] = update;
       return updateIn(current, path, (existing) =>
-        isRecord(existing) ? { ...existing, ...value } : { ...value }
+        isRecord(existing) ? { ...existing, ...value } : { ...value },
       ) as T;
     }
     default:
