@@ -33,6 +33,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@topical/core": "^0.3.1"
+    "@topical/core": "^0.3.2"
   }
 }
