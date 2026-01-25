@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.6
+
+### Fixes
+
+- Update core dependency to fix merging into undefined existing value.
+
 ## 0.3.5
 
 ### Features
