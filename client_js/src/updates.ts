@@ -82,12 +82,9 @@ export function applyUpdate<T>(current: T, update: Update): T {
     }
     case 4: {
       const [, path, value] = update;
-      return updateIn(current, path, (existing) => {
-        if (!isRecord(existing)) {
-          throw new Error("expected object");
-        }
-        return { ...existing, ...value };
-      }) as T;
+      return updateIn(current, path, (existing) =>
+        isRecord(existing) ? { ...existing, ...value } : { ...value },
+      ) as T;
     }
     default:
       throw new Error("unhandled update type");

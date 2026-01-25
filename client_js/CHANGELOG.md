@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.2
+
+### Fixes
+
+- Fix merging into undefined existing value.
+
 ## 0.3.1
 
 ### Features
