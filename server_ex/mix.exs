@@ -24,7 +24,11 @@ defmodule Topical.MixProject do
     [
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:jason, "~> 1.4"},
-      {:cowboy, "~> 2.9", optional: true}
+      {:cowboy, "~> 2.9", optional: true},
+      {:gun, "~> 2.0", only: :test},
+      {:bandit, "~> 1.1", only: :test},
+      {:plug, "~> 1.15", only: :test},
+      {:websock_adapter, "~> 0.5", only: :test}
     ]
   end
 
