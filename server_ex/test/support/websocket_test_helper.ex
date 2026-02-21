@@ -22,9 +22,7 @@ defmodule Topical.Test.WebSocketTestHelper do
 
     ExUnit.Callbacks.start_supervised!(%{
       id: registry_name,
-      start:
-        {Topical.Registry, :start_link,
-         [[name: registry_name, topics: @all_topics]]}
+      start: {Topical.Registry, :start_link, [[name: registry_name, topics: @all_topics]]}
     })
 
     port =

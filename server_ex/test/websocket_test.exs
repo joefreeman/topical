@@ -1,5 +1,6 @@
 for adapter <- [:cowboy, :bandit] do
-  module_name = Module.concat(Topical.WebSocketTest, adapter |> Atom.to_string() |> Macro.camelize())
+  module_name =
+    Module.concat(Topical.WebSocketTest, adapter |> Atom.to_string() |> Macro.camelize())
 
   defmodule module_name do
     use ExUnit.Case, async: false
@@ -70,8 +71,10 @@ for adapter <- [:cowboy, :bandit] do
         msgs = ws_receive_all(ws, 2)
         types = Enum.map(msgs, fn [type | _] -> type end)
 
-        assert 1 in types  # result
-        assert 3 in types  # topic_updates
+        # result
+        assert 1 in types
+        # topic_updates
+        assert 3 in types
 
         update_msg = Enum.find(msgs, fn [type | _] -> type == 3 end)
         assert [3, "ch1", [[0, ["count"], 1]]] = update_msg

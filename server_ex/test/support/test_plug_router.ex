@@ -1,8 +1,8 @@
 defmodule Topical.Test.PlugRouter do
   use Plug.Router
 
-  plug :match
-  plug :dispatch
+  plug(:match)
+  plug(:dispatch)
 
   get "/socket" do
     opts = conn.private[:topical_opts] || []
