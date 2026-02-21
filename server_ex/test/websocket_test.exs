@@ -351,5 +351,47 @@ for adapter <- [:cowboy, :bandit] do
         assert [2, "ch2", %{"count" => 0}] = msg
       end
     end
+
+    describe "capture (HTTP)" do
+      test "returns current topic value", %{port: port} do
+        # First set a value via WebSocket
+        ws = ws_connect(port)
+        ws_send(ws, subscribe_msg("ch1", ["counters", "capture-1"]))
+        _reset = ws_receive(ws)
+        ws_send(ws, execute_msg("req1", ["counters", "capture-1"], "set", [42]))
+        _msgs = ws_receive_all(ws, 2)
+        ws_close(ws)
+
+        {status, body} = http_get(port, "/topics/counters/capture-1")
+        assert status == 200
+        assert body == %{"count" => 42}
+      end
+
+      test "does not subscribe", %{ws: ws, port: port} do
+        # Capture a topic
+        {200, _body} = http_get(port, "/topics/counters/capture-nosub")
+
+        # Mutate the topic
+        ws_send(ws, subscribe_msg("ch1", ["counters", "capture-nosub"]))
+        _reset = ws_receive(ws)
+        ws_send(ws, execute_msg("req1", ["counters", "capture-nosub"], "increment", []))
+        _msgs = ws_receive_all(ws, 2)
+
+        # Capture again — should see the updated value (proves it's a snapshot, not a subscription)
+        {200, body} = http_get(port, "/topics/counters/capture-nosub")
+        assert body == %{"count" => 1}
+      end
+
+      test "returns 404 for unknown topic", %{port: port} do
+        {status, body} = http_get(port, "/topics/nonexistent/route")
+        assert status == 404
+        assert body == %{"error" => "not_found"}
+      end
+
+      test "returns error for unauthorized topic", %{port: port} do
+        {status, _body} = http_get(port, "/topics/private/user1")
+        assert status in [400, 403]
+      end
+    end
   end
 end

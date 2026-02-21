@@ -41,9 +41,16 @@ defmodule Topical.Test.WebSocketTestHelper do
 
     ws_opts = [registry: registry] ++ if(init_fn, do: [init: init_fn], else: [])
 
+    alias Topical.Adapters.Cowboy.RestHandler
+    rest_opts = [registry: registry] ++ if(init_fn, do: [init: init_fn], else: [])
+
     dispatch =
       :cowboy_router.compile([
-        {:_, [{"/socket", WebsocketHandler, ws_opts}]}
+        {:_,
+         [
+           {"/socket", WebsocketHandler, ws_opts},
+           {"/topics/[...]", RestHandler, rest_opts}
+         ]}
       ])
 
     ref = :"cowboy_ws_test_#{System.unique_integer([:positive])}"
@@ -137,6 +144,19 @@ defmodule Topical.Test.WebSocketTestHelper do
   """
   def ws_close(%{conn: conn} = _ws) do
     :gun.close(conn)
+  end
+
+  @doc """
+  Makes an HTTP GET request to the capture endpoint. Returns {status, body}.
+  """
+  def http_get(port, path) do
+    {:ok, conn} = :gun.open(~c"localhost", port, %{protocols: [:http]})
+    {:ok, :http} = :gun.await_up(conn, 5_000)
+    stream_ref = :gun.get(conn, String.to_charlist(path))
+    {:response, :nofin, status, _headers} = :gun.await(conn, stream_ref, 5_000)
+    {:ok, body} = :gun.await_body(conn, stream_ref, 5_000)
+    :gun.close(conn)
+    {status, Jason.decode!(body)}
   end
 
   # Protocol message builders
