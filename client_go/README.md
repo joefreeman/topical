@@ -1,4 +1,4 @@
-# Topical Go Client
+# Topical → Client (Go)
 
 A Go client for [Topical](https://github.com/joefreeman/topical), a real-time state synchronization library. Connects to a Topical server over WebSocket and keeps local state in sync.
 
