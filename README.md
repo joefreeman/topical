@@ -10,13 +10,14 @@
   <a href="https://hex.pm/packages/topical"><img src="https://img.shields.io/hexpm/v/topical.svg?color=6e4a7e" /></a>
   <a href="https://www.npmjs.com/package/@topical/core"><img src="https://img.shields.io/npm/v/@topical/core.svg?color=3178c6" /></a>
   <a href="https://www.npmjs.com/package/@topical/react"><img src="https://img.shields.io/npm/v/@topical/react.svg?color=087ea4" /></a>
+  <a href="https://pkg.go.dev/github.com/joefreeman/topical/client_go"><img src="https://pkg.go.dev/badge/github.com/joefreeman/topical/client_go.svg" /></a>
 </p>
 
 <br />
 
 Topical is an Elixir library for synchronising server-maintained state (_topics_) to connected clients. Topic lifecycle is managed by the server: topics are initialised as needed, shared between subscribing clients, and automatically shut down when not in use.
 
-The accompanying JavaScript library (and React hooks) allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
+The accompanying JavaScript library (and React hooks) and Go client allow clients to easily connect to topics, and efficiently receive real-time updates. Clients can also send requests (or notifications) upstream to the server.
 
 <p align="center">
   <img src="architecture.png" width="400" alt="Architecture diagram" />
@@ -137,6 +138,7 @@ This repository is separated into:
 - [`server_ex`](server_ex/) - the Elixir library for implementing topic servers, including adapters.
 - [`client_js`](client_js/) - the vanilla JavaScript WebSocket client.
 - [`client_react`](client_react/) - React hooks built on top of the JavaScript client.
+- [`client_go`](client_go/) - Go WebSocket client.
 
 ## License
 
