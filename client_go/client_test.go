@@ -59,6 +59,7 @@ func (ms *mockServer) close() {
 }
 
 func TestConnectAndClose(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any { return nil })
 	defer ms.close()
 
@@ -74,6 +75,7 @@ func TestConnectAndClose(t *testing.T) {
 }
 
 func TestSubscribeReceivesReset(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqSubscribe {
@@ -94,7 +96,7 @@ func TestSubscribeReceivesReset(t *testing.T) {
 	}
 	defer client.Close()
 
-	sub := client.Subscribe([]string{"lists", "test"})
+	sub := client.Subscribe("lists/test", nil)
 	defer sub.Unsubscribe()
 
 	select {
@@ -112,6 +114,7 @@ func TestSubscribeReceivesReset(t *testing.T) {
 }
 
 func TestSubscribeReceivesUpdates(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqSubscribe {
@@ -136,7 +139,7 @@ func TestSubscribeReceivesUpdates(t *testing.T) {
 	}
 	defer client.Close()
 
-	sub := client.Subscribe([]string{"counter"})
+	sub := client.Subscribe("counter", nil)
 	defer sub.Unsubscribe()
 
 	// Should eventually get the updated value (count=1)
@@ -155,6 +158,7 @@ func TestSubscribeReceivesUpdates(t *testing.T) {
 }
 
 func TestExecute(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqExecute {
@@ -174,7 +178,7 @@ func TestExecute(t *testing.T) {
 	}
 	defer client.Close()
 
-	result, err := client.Execute(ctx, []string{"lists", "test"}, "greet", []any{"world"})
+	result, err := client.Execute(ctx, "lists/test", "greet", []any{"world"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,6 +188,7 @@ func TestExecute(t *testing.T) {
 }
 
 func TestExecuteError(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqExecute {
@@ -203,7 +208,7 @@ func TestExecuteError(t *testing.T) {
 	}
 	defer client.Close()
 
-	_, err = client.Execute(ctx, []string{"lists", "test"}, "missing", nil)
+	_, err = client.Execute(ctx, "lists/test", "missing", nil, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -213,6 +218,7 @@ func TestExecuteError(t *testing.T) {
 }
 
 func TestNotify(t *testing.T) {
+	t.Parallel()
 	received := make(chan []any, 1)
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
@@ -230,7 +236,7 @@ func TestNotify(t *testing.T) {
 	}
 	defer client.Close()
 
-	err = client.Notify([]string{"lists", "test"}, "ping", []any{"data"})
+	err = client.Notify("lists/test", "ping", []any{"data"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -247,6 +253,7 @@ func TestNotify(t *testing.T) {
 }
 
 func TestTypedSubscription(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqSubscribe {
@@ -277,7 +284,7 @@ func TestTypedSubscription(t *testing.T) {
 	}
 	defer client.Close()
 
-	sub := Subscribe[List](client, []string{"lists", "test"})
+	sub := Subscribe[List](client, "lists/test", nil)
 	defer sub.Unsubscribe()
 
 	select {
@@ -297,6 +304,7 @@ func TestTypedSubscription(t *testing.T) {
 }
 
 func TestSubscriptionDedup(t *testing.T) {
+	t.Parallel()
 	var subscribeCount atomic.Int32
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
@@ -318,7 +326,7 @@ func TestSubscriptionDedup(t *testing.T) {
 	}
 	defer client.Close()
 
-	sub1 := client.Subscribe([]string{"counter"})
+	sub1 := client.Subscribe("counter", nil)
 	// Wait for first value
 	select {
 	case <-sub1.Values():
@@ -326,7 +334,7 @@ func TestSubscriptionDedup(t *testing.T) {
 		t.Fatal("timeout")
 	}
 
-	sub2 := client.Subscribe([]string{"counter"})
+	sub2 := client.Subscribe("counter", nil)
 	// Second subscriber should immediately get the cached value
 	select {
 	case <-sub2.Values():
@@ -343,12 +351,12 @@ func TestSubscriptionDedup(t *testing.T) {
 }
 
 func TestTopicAlias(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqSubscribe {
 			channelID := msg[1].(float64)
-			topic := msg[2].([]any)
-			topicName := topic[0].(string)
+			topicName := msg[2].(string)
 			if topicName == "first" {
 				// First subscription gets a reset
 				return [][]any{
@@ -373,14 +381,14 @@ func TestTopicAlias(t *testing.T) {
 	}
 	defer client.Close()
 
-	sub1 := client.Subscribe([]string{"first"})
+	sub1 := client.Subscribe("first", nil)
 	select {
 	case <-sub1.Values():
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for first value")
 	}
 
-	sub2 := client.Subscribe([]string{"second"})
+	sub2 := client.Subscribe("second", nil)
 	// Should receive the aliased value from the first topic
 	select {
 	case val := <-sub2.Values():
@@ -397,6 +405,7 @@ func TestTopicAlias(t *testing.T) {
 }
 
 func TestCloseUnblocksSubscribers(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		opcode := int(msg[0].(float64))
 		if opcode == reqSubscribe {
@@ -415,7 +424,7 @@ func TestCloseUnblocksSubscribers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sub := client.Subscribe([]string{"test"})
+	sub := client.Subscribe("test", nil)
 	// Drain initial value
 	select {
 	case <-sub.Values():
@@ -437,6 +446,7 @@ func TestCloseUnblocksSubscribers(t *testing.T) {
 }
 
 func TestExecuteTimeout(t *testing.T) {
+	t.Parallel()
 	ms := newMockServer(func(msg []any) [][]any {
 		// Never respond to execute requests
 		return nil
@@ -453,7 +463,7 @@ func TestExecuteTimeout(t *testing.T) {
 	execCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 	defer cancel()
 
-	_, err = client.Execute(execCtx, []string{"lists", "test"}, "slow", nil)
+	_, err = client.Execute(execCtx, "lists/test", "slow", nil, nil)
 	if err == nil {
 		t.Fatal("expected error from timeout")
 	}

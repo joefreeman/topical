@@ -6,7 +6,8 @@ import (
 )
 
 func TestEncodeNotifyWithoutParams(t *testing.T) {
-	data, err := encodeNotify([]string{"lists", "abc"}, "add_item", []any{"hello"}, Params{})
+	t.Parallel()
+	data, err := encodeNotify("lists/abc", "add_item", []any{"hello"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +22,8 @@ func TestEncodeNotifyWithoutParams(t *testing.T) {
 }
 
 func TestEncodeNotifyWithParams(t *testing.T) {
-	data, err := encodeNotify([]string{"lists", "abc"}, "add_item", []any{"hello"}, Params{"user": "joe"})
+	t.Parallel()
+	data, err := encodeNotify("lists/abc", "add_item", []any{"hello"}, Params{"user": "joe"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +35,8 @@ func TestEncodeNotifyWithParams(t *testing.T) {
 }
 
 func TestEncodeExecuteWithoutParams(t *testing.T) {
-	data, err := encodeExecute(42, []string{"lists", "abc"}, "get_item", []any{1}, Params{})
+	t.Parallel()
+	data, err := encodeExecute(42, "lists/abc", "get_item", []any{1}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +54,8 @@ func TestEncodeExecuteWithoutParams(t *testing.T) {
 }
 
 func TestEncodeSubscribeWithoutParams(t *testing.T) {
-	data, err := encodeSubscribe(1, []string{"lists", "abc"}, Params{})
+	t.Parallel()
+	data, err := encodeSubscribe(1, "lists/abc", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +70,8 @@ func TestEncodeSubscribeWithoutParams(t *testing.T) {
 }
 
 func TestEncodeSubscribeWithParams(t *testing.T) {
-	data, err := encodeSubscribe(1, []string{"lists", "abc"}, Params{"key": "val"})
+	t.Parallel()
+	data, err := encodeSubscribe(1, "lists/abc", Params{"key": "val"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,6 +83,7 @@ func TestEncodeSubscribeWithParams(t *testing.T) {
 }
 
 func TestEncodeUnsubscribe(t *testing.T) {
+	t.Parallel()
 	data, err := encodeUnsubscribe(7)
 	if err != nil {
 		t.Fatal(err)
@@ -93,6 +99,7 @@ func TestEncodeUnsubscribe(t *testing.T) {
 }
 
 func TestDecodeResponse(t *testing.T) {
+	t.Parallel()
 	data := []byte(`[2, 1, {"items": {}}]`)
 	opcode, fields, err := decodeResponse(data)
 	if err != nil {
@@ -112,6 +119,7 @@ func TestDecodeResponse(t *testing.T) {
 }
 
 func TestDecodeResponseTooShort(t *testing.T) {
+	t.Parallel()
 	data := []byte(`[2]`)
 	_, _, err := decodeResponse(data)
 	if err == nil {
@@ -120,12 +128,13 @@ func TestDecodeResponseTooShort(t *testing.T) {
 }
 
 func TestTopicKey(t *testing.T) {
-	key := topicKey([]string{"lists", "abc"}, Params{})
+	t.Parallel()
+	key := topicKey("lists/abc", nil)
 	if key != "lists/abc?" {
 		t.Errorf("unexpected key: %s", key)
 	}
 
-	key2 := topicKey([]string{"lists", "abc"}, Params{"b": "2", "a": "1"})
+	key2 := topicKey("lists/abc", Params{"b": "2", "a": "1"})
 	expected := "lists/abc?a=1&b=2"
 	if key2 != expected {
 		t.Errorf("expected %s, got %s", expected, key2)

@@ -4,9 +4,7 @@ import "context"
 
 // Execute sends an RPC-style request and blocks until the server responds.
 // The context controls the timeout.
-func (c *Client) Execute(ctx context.Context, topic []string, action string, args []any, params ...Params) (any, error) {
-	p := firstParams(params)
-
+func (c *Client) Execute(ctx context.Context, topic string, action string, args []any, params Params) (any, error) {
 	c.mu.Lock()
 	if c.state != Connected {
 		c.mu.Unlock()
@@ -23,7 +21,7 @@ func (c *Client) Execute(ctx context.Context, topic []string, action string, arg
 	if args == nil {
 		args = []any{}
 	}
-	data, err := encodeExecute(channelID, topic, action, args, p)
+	data, err := encodeExecute(channelID, topic, action, args, params)
 	if err != nil {
 		c.mu.Lock()
 		delete(c.requests, channelID)
@@ -52,9 +50,7 @@ func (c *Client) Execute(ctx context.Context, topic []string, action string, arg
 }
 
 // Notify sends a fire-and-forget notification.
-func (c *Client) Notify(topic []string, action string, args []any, params ...Params) error {
-	p := firstParams(params)
-
+func (c *Client) Notify(topic string, action string, args []any, params Params) error {
 	c.mu.Lock()
 	if c.state != Connected {
 		c.mu.Unlock()
@@ -65,7 +61,7 @@ func (c *Client) Notify(topic []string, action string, args []any, params ...Par
 	if args == nil {
 		args = []any{}
 	}
-	data, err := encodeNotify(topic, action, args, p)
+	data, err := encodeNotify(topic, action, args, params)
 	if err != nil {
 		return err
 	}

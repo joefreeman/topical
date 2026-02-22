@@ -19,7 +19,7 @@ const (
 	respTopicAlias   = 4
 )
 
-func encodeNotify(topic []string, action string, args []any, params Params) ([]byte, error) {
+func encodeNotify(topic string, action string, args []any, params Params) ([]byte, error) {
 	var msg []any
 	if len(params) > 0 {
 		msg = []any{reqNotify, topic, action, args, params}
@@ -29,7 +29,7 @@ func encodeNotify(topic []string, action string, args []any, params Params) ([]b
 	return json.Marshal(msg)
 }
 
-func encodeExecute(channelID int, topic []string, action string, args []any, params Params) ([]byte, error) {
+func encodeExecute(channelID int, topic string, action string, args []any, params Params) ([]byte, error) {
 	var msg []any
 	if len(params) > 0 {
 		msg = []any{reqExecute, channelID, topic, action, args, params}
@@ -39,7 +39,7 @@ func encodeExecute(channelID int, topic []string, action string, args []any, par
 	return json.Marshal(msg)
 }
 
-func encodeSubscribe(channelID int, topic []string, params Params) ([]byte, error) {
+func encodeSubscribe(channelID int, topic string, params Params) ([]byte, error) {
 	var msg []any
 	if len(params) > 0 {
 		msg = []any{reqSubscribe, channelID, topic, params}

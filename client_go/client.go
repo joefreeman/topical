@@ -41,9 +41,9 @@ type Params map[string]string
 
 var (
 	// ErrNotConnected is returned when an operation requires a connection but the client is not connected.
-	ErrNotConnected = errors.New("not connected")
+	ErrNotConnected = errors.New("topical: not connected")
 	// ErrInvalidMessage is returned when a received message cannot be decoded.
-	ErrInvalidMessage = errors.New("invalid message")
+	ErrInvalidMessage = errors.New("topical: invalid message")
 )
 
 type clientConfig struct {
@@ -81,7 +81,7 @@ type request struct {
 
 type topicEntry struct {
 	listeners []*listener
-	topicPath []string
+	topic     string
 	params    Params
 	channelID int
 	value     any
@@ -107,7 +107,7 @@ type Client struct {
 	requests       map[int]*request
 	subscriptions  map[int]string // channelID -> topic key
 	aliases        map[int]int    // aliased channelID -> target channelID
-	stateListeners map[int]func(State)
+	stateListeners map[int]chan State
 	nextListenerID int
 	ctx            context.Context
 	cancel         context.CancelFunc
@@ -135,7 +135,7 @@ func Connect(ctx context.Context, rawURL string, opts ...Option) (*Client, error
 		requests:       make(map[int]*request),
 		subscriptions:  make(map[int]string),
 		aliases:        make(map[int]int),
-		stateListeners: make(map[int]func(State)),
+		stateListeners: make(map[int]chan State),
 		ctx:            clientCtx,
 		cancel:         cancel,
 	}
@@ -187,35 +187,46 @@ func (c *Client) State() State {
 	return c.state
 }
 
-// OnStateChange registers a callback for state changes. Returns an unsubscribe function.
-func (c *Client) OnStateChange(fn func(State)) func() {
+// StateSubscription receives connection state changes.
+type StateSubscription struct {
+	client *Client
+	id     int
+	ch     chan State
+}
+
+// C returns a channel that receives state changes.
+func (ss *StateSubscription) C() <-chan State {
+	return ss.ch
+}
+
+// Close removes this state subscription.
+func (ss *StateSubscription) Close() {
+	ss.client.mu.Lock()
+	defer ss.client.mu.Unlock()
+	delete(ss.client.stateListeners, ss.id)
+}
+
+// StateChanges returns a subscription that receives connection state changes.
+func (c *Client) StateChanges() *StateSubscription {
 	c.mu.Lock()
 	id := c.nextListenerID
 	c.nextListenerID++
-	c.stateListeners[id] = fn
+	ch := make(chan State, 1)
+	c.stateListeners[id] = ch
 	c.mu.Unlock()
-	return func() {
-		c.mu.Lock()
-		defer c.mu.Unlock()
-		delete(c.stateListeners, id)
-	}
+	return &StateSubscription{client: c, id: id, ch: ch}
 }
 
-// setStateLocked updates the state and returns a snapshot of listeners to call
-// outside the lock to avoid deadlock risk from user callbacks.
-func (c *Client) setStateLocked(s State) map[int]func(State) {
-	c.state = s
-	listeners := make(map[int]func(State), len(c.stateListeners))
-	for id, fn := range c.stateListeners {
-		listeners[id] = fn
+// notifyStateListeners sends the new state to all state listener channels.
+func (c *Client) notifyStateListeners(s State) {
+	c.mu.Lock()
+	listeners := make([]chan State, 0, len(c.stateListeners))
+	for _, ch := range c.stateListeners {
+		listeners = append(listeners, ch)
 	}
-	return listeners
-}
-
-// notifyStateListeners invokes state listener callbacks. Must be called outside the mutex.
-func notifyStateListeners(listeners map[int]func(State), s State) {
-	for _, fn := range listeners {
-		fn(s)
+	c.mu.Unlock()
+	for _, ch := range listeners {
+		sendReplace(ch, s)
 	}
 }
 
@@ -435,7 +446,7 @@ func (c *Client) handleTopicAlias(fields []json.RawMessage) {
 
 func (c *Client) handleDisconnect() {
 	c.mu.Lock()
-	stateListeners := c.setStateLocked(Disconnected)
+	c.state = Disconnected
 
 	// Clear channel IDs from topics (they'll be reassigned on reconnect)
 	for _, t := range c.topics {
@@ -463,11 +474,14 @@ func (c *Client) handleDisconnect() {
 				}
 			}
 		}
+		for _, ch := range c.stateListeners {
+			close(ch)
+		}
 	}
 
 	c.mu.Unlock()
 
-	notifyStateListeners(stateListeners, Disconnected)
+	c.notifyStateListeners(Disconnected)
 
 	if shouldReconnect {
 		c.reconnect()
@@ -488,25 +502,25 @@ func (c *Client) reconnect() {
 			c.mu.Unlock()
 			return
 		}
-		stateListeners := c.setStateLocked(Connecting)
+		c.state = Connecting
 		c.mu.Unlock()
 
-		notifyStateListeners(stateListeners, Connecting)
+		c.notifyStateListeners(Connecting)
 
 		conn, _, err := websocket.Dial(c.ctx, c.url, c.config.dialOptions)
 		if err != nil {
 			delay = min(delay*2, c.config.backoffMax)
 			c.mu.Lock()
-			stateListeners = c.setStateLocked(Disconnected)
+			c.state = Disconnected
 			c.mu.Unlock()
-			notifyStateListeners(stateListeners, Disconnected)
+			c.notifyStateListeners(Disconnected)
 			continue
 		}
 		conn.SetReadLimit(-1)
 
 		c.mu.Lock()
 		c.conn = conn
-		stateListeners = c.setStateLocked(Connected)
+		c.state = Connected
 
 		// Resubscribe all active topics
 		for key := range c.topics {
@@ -514,7 +528,7 @@ func (c *Client) reconnect() {
 		}
 		c.mu.Unlock()
 
-		notifyStateListeners(stateListeners, Connected)
+		c.notifyStateListeners(Connected)
 
 		c.wg.Add(1)
 		go c.readLoop()
@@ -531,7 +545,7 @@ func (c *Client) setupSubscriptionLocked(key string) {
 	t.channelID = channelID
 	c.subscriptions[channelID] = key
 
-	data, err := encodeSubscribe(channelID, t.topicPath, t.params)
+	data, err := encodeSubscribe(channelID, t.topic, t.params)
 	if err != nil {
 		return
 	}
@@ -558,14 +572,9 @@ func (c *Client) sendLocked(data []byte) error {
 }
 
 // topicKey generates a deterministic key for a topic + params combination.
-func topicKey(topic []string, params Params) string {
+func topicKey(topic string, params Params) string {
 	var b strings.Builder
-	for i, part := range topic {
-		if i > 0 {
-			b.WriteByte('/')
-		}
-		b.WriteString(url.PathEscape(part))
-	}
+	b.WriteString(topic)
 	b.WriteByte('?')
 	keys := make([]string, 0, len(params))
 	for k := range params {

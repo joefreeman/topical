@@ -15,6 +15,7 @@ func j(s string) any {
 }
 
 func TestSetRootValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": 1}`)
 	update := j(`[0, [], 2]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -25,6 +26,7 @@ func TestSetRootValue(t *testing.T) {
 }
 
 func TestSetNewValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{}`)
 	update := j(`[0, ["foo", "bar"], 2]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -35,6 +37,7 @@ func TestSetNewValue(t *testing.T) {
 }
 
 func TestSetValueWithinList(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": [0, {"bar": 1}, 2]}`)
 	update := j(`[0, ["foo", 1, "bar"], 3]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -45,6 +48,7 @@ func TestSetValueWithinList(t *testing.T) {
 }
 
 func TestReplaceExistingValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": {"bar": 1, "baz": 2}}`)
 	update := j(`[0, ["foo", "bar"], 3]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -55,6 +59,7 @@ func TestReplaceExistingValue(t *testing.T) {
 }
 
 func TestUnsetValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": {"bar": 2}}`)
 	update := j(`[1, ["foo"], "bar"]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -65,6 +70,7 @@ func TestUnsetValue(t *testing.T) {
 }
 
 func TestUnsetValueWithinList(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": [0, {"bar": 1}, 2]}`)
 	update := j(`[1, ["foo", 1], "bar"]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -75,6 +81,7 @@ func TestUnsetValueWithinList(t *testing.T) {
 }
 
 func TestResetValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": {"bar": 2}}`)
 	update := j(`[0, [], null]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -87,6 +94,7 @@ func TestResetValue(t *testing.T) {
 }
 
 func TestInsertIntoList(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": [0, 1, 2]}`)
 	update := j(`[2, ["foo"], 1, [3, 4]]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -97,6 +105,7 @@ func TestInsertIntoList(t *testing.T) {
 }
 
 func TestDeleteFromList(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": [0, 1, 2, 3]}`)
 	update := j(`[3, ["foo"], 1, 2]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -107,6 +116,7 @@ func TestDeleteFromList(t *testing.T) {
 }
 
 func TestMergeValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": {"bar": {"a": 1, "b": 2}}}`)
 	update := j(`[4, ["foo", "bar"], {"b": 3, "c": 4}]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -117,6 +127,7 @@ func TestMergeValue(t *testing.T) {
 }
 
 func TestMergeNonExistingValue(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": {}}`)
 	update := j(`[4, ["foo", "bar"], {"a": 1}]`).([]any)
 	result, err := applyUpdate(current, update)
@@ -127,6 +138,7 @@ func TestMergeNonExistingValue(t *testing.T) {
 }
 
 func TestInsertAppend(t *testing.T) {
+	t.Parallel()
 	current := j(`{"foo": [0, 1]}`)
 	update := j(`[2, ["foo"], null, [2, 3]]`).([]any)
 	result, err := applyUpdate(current, update)

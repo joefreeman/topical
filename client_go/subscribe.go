@@ -9,9 +9,9 @@ type Subscription struct {
 
 // Subscribe creates a subscription to the given topic. Multiple calls with the
 // same topic and params share a single server subscription (reference counted).
-func (c *Client) Subscribe(topic []string, params ...Params) *Subscription {
-	p := firstParams(params)
-	key := topicKey(topic, p)
+// The topic is a slash-separated path (e.g. "lists/my-list").
+func (c *Client) Subscribe(topic string, params Params) *Subscription {
+	key := topicKey(topic, params)
 
 	l := &listener{
 		values: make(chan any, 1),
@@ -31,8 +31,8 @@ func (c *Client) Subscribe(topic []string, params ...Params) *Subscription {
 		// New topic
 		t := &topicEntry{
 			listeners: []*listener{l},
-			topicPath: topic,
-			params:    p,
+			topic: topic,
+			params:    params,
 		}
 		c.topics[key] = t
 		if c.state == Connected {
@@ -97,12 +97,4 @@ func (s *Subscription) Unsubscribe() {
 	s.listener.closed = true
 	close(s.listener.values)
 	close(s.listener.errors)
-}
-
-// firstParams returns the first Params from the variadic list, or an empty Params.
-func firstParams(params []Params) Params {
-	if len(params) == 0 {
-		return Params{}
-	}
-	return params[0]
 }

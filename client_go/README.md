@@ -35,7 +35,7 @@ client, err := topical.Connect(ctx, url,
 Subscribe returns a `*Subscription` with channels for receiving values and errors. Multiple subscriptions to the same topic share a single server-side subscription.
 
 ```go
-sub := client.Subscribe([]string{"lists", "my-list"})
+sub := client.Subscribe("lists/my-list", nil)
 defer sub.Unsubscribe()
 
 for val := range sub.Values() {
@@ -46,10 +46,7 @@ for val := range sub.Values() {
 Topics can take parameters:
 
 ```go
-sub := client.Subscribe(
-    []string{"lists", "my-list"},
-    topical.Params{"user_id": "123"},
-)
+sub := client.Subscribe("lists/my-list", topical.Params{"user_id": "123"})
 ```
 
 ### Typed subscriptions
@@ -62,7 +59,7 @@ type TodoList struct {
     Order []string        `json:"order"`
 }
 
-sub := topical.Subscribe[TodoList](client, []string{"lists", "my-list"})
+sub := topical.Subscribe[TodoList](client, "lists/my-list", nil)
 defer sub.Unsubscribe()
 
 for list := range sub.Values() {
@@ -78,7 +75,7 @@ Send a request and wait for a response. The context controls the timeout:
 ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 defer cancel()
 
-result, err := client.Execute(ctx, []string{"lists", "my-list"}, "add_item", []any{"buy milk"})
+result, err := client.Execute(ctx, "lists/my-list", "add_item", []any{"buy milk"}, nil)
 ```
 
 ### Notify (fire-and-forget)
@@ -86,7 +83,7 @@ result, err := client.Execute(ctx, []string{"lists", "my-list"}, "add_item", []a
 Send a one-way message with no response:
 
 ```go
-err := client.Notify([]string{"lists", "my-list"}, "mark_done", []any{"item-id"})
+err := client.Notify("lists/my-list", "mark_done", []any{"item-id"}, nil)
 ```
 
 ### Connection state
@@ -94,10 +91,12 @@ err := client.Notify([]string{"lists", "my-list"}, "mark_done", []any{"item-id"}
 ```go
 fmt.Println(client.State()) // "connected", "connecting", or "disconnected"
 
-unsub := client.OnStateChange(func(s topical.State) {
+stateSub := client.StateChanges()
+defer stateSub.Close()
+
+for s := range stateSub.C() {
     fmt.Println("state changed:", s)
-})
-defer unsub()
+}
 ```
 
 ### Error handling
