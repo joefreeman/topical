@@ -1,0 +1,40 @@
+name: Client (Go)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "client_go/**"
+      - ".github/workflows/client_go.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "client_go/**"
+      - ".github/workflows/client_go.yml"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client_go
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: client_go/go.mod
+          cache-dependency-path: client_go/go.sum
+
+      - name: Build
+        run: go build ./topical/...
+
+      - name: Vet
+        run: go vet ./topical/...
+
+      - name: Test
+        run: go test -race ./topical/...
