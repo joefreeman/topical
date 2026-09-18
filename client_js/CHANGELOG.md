@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Unreleased
+
+### Fixes
+
+- Fix applying an update through a list element (`set`, `unset` or `merge` with a numeric path segment), which failed with "index out of range" for every valid index.
+
 ## 0.3.2
 
 ### Fixes

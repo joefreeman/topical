@@ -24,7 +24,7 @@ function updateIn(
     if (!Array.isArray(value)) {
       throw new Error("expected array");
     }
-    if (key <= value.length) {
+    if (key < 0 || key >= value.length) {
       throw new Error("index out of range");
     }
     return [
