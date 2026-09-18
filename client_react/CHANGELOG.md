@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.7
+
+### Fixes
+
+- Update core dependency to fix applying an update through a list element.
+
 ## 0.3.6
 
 ### Fixes
