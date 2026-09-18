@@ -1,11 +1,11 @@
 {
   "name": "@topical/core",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Vanilla Topical client.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test src/*.test.ts",
     "prepublishOnly": "npm run clean && npm run build",
     "build": "tsc",
     "clean": "rm -rf dist",
